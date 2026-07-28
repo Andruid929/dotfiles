@@ -2,8 +2,11 @@ package io.github.andruid929.dotfiles.transformer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
+
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.Set;
 
 import io.github.andruid929.dotfiles.Dotfile;
@@ -11,9 +14,11 @@ import io.github.andruid929.dotfiles.Dotfile;
 class JsonTransformerTest {
 
     @Test
-    void roundTripTest() {
+    void roundTrip_shouldPreserveData() {
+        String path = interpolate("name{}andrew", File.separator);
+
         var dotfile = new Dotfile("test file", "Hello world",
-                "name/andrew", "file.sql");
+                path, "file.sql");
 
         Set<Dotfile> dotfilesSet = Set.of(dotfile);
 
@@ -25,8 +30,8 @@ class JsonTransformerTest {
 
         Dotfile dotfileFromDeserialisedSet = deserialisedSet.stream().toList().getFirst();
 
-        assertEquals("name/andrew", dotfileFromDeserialisedSet.getFilePath());
         assertEquals("Hello world", dotfileFromDeserialisedSet.getFileContents());
+        assertEquals(path, dotfileFromDeserialisedSet.getFilePath());
     }
 
 }

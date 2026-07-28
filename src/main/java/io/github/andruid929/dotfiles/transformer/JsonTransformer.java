@@ -1,6 +1,7 @@
 package io.github.andruid929.dotfiles.transformer;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadFeature;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -19,16 +20,15 @@ import io.github.andruid929.dotfiles.annotations.Blankable;
 
 public final class JsonTransformer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(JsonTransformer.class);
-
     public static final TypeReference<Set<Dotfile>> DOT_FILES_TYPE = new TypeReference<>() {
     };
-
     public static final JsonMapper mapper;
+    private static final Logger LOGGER = LoggerFactory.getLogger(JsonTransformer.class);
 
     static {
         mapper = JsonMapper.builder()
                 .enable(SerializationFeature.INDENT_OUTPUT)
+                .enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION)
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
                 .build();

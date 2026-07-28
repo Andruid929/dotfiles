@@ -1,11 +1,13 @@
 package io.github.andruid929.dotfiles;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 import io.github.andruid929.dotfiles.io.IOUtil;
 import io.github.andruid929.dotfiles.io.PathReader;
@@ -21,12 +23,27 @@ public final class Worker {
     private Worker() {
     }
 
+
+    public static @Nullable Dotfile getDotfile(@NotNull String key) {
+        return DOTFILES_SET.stream()
+                .filter(dotfile -> dotfile.getKey().equalsIgnoreCase(key))
+                .findFirst()
+                .orElse(null);
+    }
+
     public static void addDotfile(Dotfile dotfile) {
         DOTFILES_SET.add(dotfile);
     }
 
     public static boolean removeDotfile(@NotNull String key) {
-        return DOTFILES_SET.removeIf(dotfile -> dotfile.getKey().equals(key));
+        return DOTFILES_SET.removeIf(dotfile -> dotfile.getKey().equalsIgnoreCase(key));
+    }
+
+    public static void updateDotfile(@NotNull String key, Consumer<Dotfile> operation) {
+        DOTFILES_SET.stream()
+                .filter(dotfile -> dotfile.getKey().equalsIgnoreCase(key))
+                .findFirst()
+                .ifPresentOrElse(operation, () -> LOGGER.info("File with key '{}' not found", key));
     }
 
     public static void start() {

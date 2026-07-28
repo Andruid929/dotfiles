@@ -24,13 +24,12 @@ public class ListAllCommand extends CommandAction {
 
         int count = 0;
 
-
         System.out.println(formatOutput("Num", "Key", "Filepath"));
 
         System.out.println(formatOutput("---", "---", "--------"));
 
         for (Dotfile dotfile : loadedDotfiles) {
-            String pathToFile = dotfile.getFilePath().concat(dotfile.getFilename());
+            String pathToFile = dotfile.getPathToFile().toString();
 
             String output = formatOutput(String.valueOf(++count), dotfile.getKey(), pathToFile);
 

@@ -9,6 +9,7 @@ dependency-reduced-pom.xml
 *.log.gz
 ### IntelliJ IDEA ###
 .idea/
+.junie/
 *.iws
 *.iml
 *.ipr
@@ -45,3 +46,4 @@ build/
 ### Andrew ###
 *.temp
 *.noversion
+Testing.java

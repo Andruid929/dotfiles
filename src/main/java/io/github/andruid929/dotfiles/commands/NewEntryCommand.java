@@ -1,9 +1,9 @@
 package io.github.andruid929.dotfiles.commands;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import org.jetbrains.annotations.Nullable;
 
 import io.github.andruid929.dotfiles.Dotfile;
 import io.github.andruid929.dotfiles.Worker;
@@ -16,10 +16,10 @@ import picocli.CommandLine.Option;
 @Command(name = "save", description = "Save new config")
 public final class NewEntryCommand extends CommandAction {
 
-    @Option(names = { "-k", "--key" }, required = true, description = "The key for this file")
+    @Option(names = {"-k", "--key"}, required = true, description = "The key for this file")
     String key;
 
-    @Option(names = { "-f", "--file" }, required = true, description = "Where the file is located")
+    @Option(names = {"-f", "--file"}, required = true, description = "Where the file is located")
     String filePath;
 
     @Override
@@ -45,7 +45,7 @@ public final class NewEntryCommand extends CommandAction {
             String fileLocation = fileAndPath[0];
             String filename = fileAndPath[1];
 
-            Dotfile dotfile = new Dotfile(key, content, fileLocation, filename);
+            Dotfile dotfile = new Dotfile(sanitise(key, false), content, fileLocation, filename);
 
             Worker.addDotfile(dotfile);
 
@@ -67,7 +67,7 @@ public final class NewEntryCommand extends CommandAction {
             return null;
         }
 
-        String expandedPath = PathUtil.expandPath(filePath);
+        String expandedPath = PathUtil.expandPath(sanitise(filePath, true));
 
         Path pathToFile = Path.of(expandedPath);
 

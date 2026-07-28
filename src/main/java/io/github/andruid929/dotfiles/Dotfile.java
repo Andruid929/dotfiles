@@ -1,30 +1,30 @@
 package io.github.andruid929.dotfiles;
 
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
+import java.util.Locale;
 import java.util.Objects;
 
-import io.github.andruid929.dotfiles.annotations.Blankable;
 import io.github.andruid929.dotfiles.errors.BlankValueException;
 import io.github.andruid929.dotfiles.util.PathUtil;
 
-public class Dotfile {
+public final class Dotfile {
 
     @NotNull
     private String key;
 
     @NotNull
-    private String filename;
-
-    @NotNull
     private String fileContents;
 
     @NotNull
-    @Blankable
-    private String filePath;
+    private Path pathToFile;
 
     @JsonCreator
     public Dotfile(
@@ -34,10 +34,12 @@ public class Dotfile {
             @NotNull @JsonProperty("filename") String filename) {
         checkForBlanks(key, fileContents);
 
-        this.key = key;
+        this.key = key.toLowerCase(Locale.ROOT);
         this.fileContents = fileContents;
-        this.filePath = PathUtil.shortenPath(filePath);
-        this.filename = filename;
+
+        String shortenedPath = PathUtil.shortenPath(filePath); //Shorten the path if necessary
+
+        this.pathToFile = Path.of(shortenedPath, filename);
     }
 
     private void checkForBlanks(@NotNull String key, String fileContents) {
@@ -50,22 +52,40 @@ public class Dotfile {
         }
     }
 
+    @JsonIgnore
+    public @NotNull Path getPathToFile() {
+        return Path.of(getFilePath(), getFilename());
+    }
+
     @NotNull
     public String getKey() {
         return key;
     }
 
     public void setKey(@NotNull String key) {
-        this.key = key;
+        this.key = key.toLowerCase(Locale.ROOT);
     }
 
     @NotNull
     public String getFilename() {
-        return filename;
+        Path filename = Objects.requireNonNull(pathToFile.getFileName());
+
+        return filename.toString();
     }
 
     public void setFilename(@NotNull String filename) {
-        this.filename = filename;
+        if (filename.isBlank()) {
+            throw new IllegalArgumentException("DotFILEs needs at least a FILEname");
+        }
+
+        Path path = pathToFile.getParent();
+
+        if (path == null) {
+            pathToFile = Path.of(filename);
+
+        } else {
+            pathToFile = path.resolve(filename);
+        }
     }
 
     @NotNull
@@ -78,32 +98,38 @@ public class Dotfile {
     }
 
     @NotNull
-    @Blankable
     public String getFilePath() {
-        return filePath;
+        Path filepath = Objects.requireNonNull(pathToFile.getParent());
+
+        return PathUtil.expandPath(filepath.toString());
     }
 
     public void setFilePath(@NotNull String filePath) {
-        this.filePath = filePath;
+        Path filename = pathToFile.getFileName();
+
+        if (filePath.isBlank()) {
+            pathToFile = Path.of("~", filename.toString());
+
+        } else {
+            pathToFile = Path.of(filePath).resolve(filename);
+        }
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
+
         Dotfile dotFile = (Dotfile) o;
-        return Objects.equals(key, dotFile.key) && Objects.equals(filename, dotFile.filename) && Objects.equals(fileContents, dotFile.fileContents);
+        return Objects.equals(key, dotFile.key);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, filename, fileContents, filePath);
+        return Objects.hash(key);
     }
 
     @Override
     public String toString() {
-        return "Dotfile{key=\"".concat(key).concat("\", ")
-                .concat("filename=\"").concat(filename).concat("\", ")
-                .concat("filepath=\"").concat(filePath).concat("\", ")
-                .concat("content=").concat(fileContents).concat("\"}");
+        return interpolate("Dotfile{key=\"{}\", filepath=\"{}\", content=\"{}\"}", key, pathToFile, fileContents);
     }
 }

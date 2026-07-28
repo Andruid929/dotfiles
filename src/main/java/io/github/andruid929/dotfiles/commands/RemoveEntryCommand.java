@@ -10,16 +10,18 @@ import picocli.CommandLine.Parameters;
 public final class RemoveEntryCommand extends CommandAction {
 
     @Parameters(index = "0", defaultValue = "", description = "The key of the dotfile to remove")
-    String dotfileKey;
+    String key;
 
     @Override
     public void run() {
-        if (dotfileKey.isBlank()) {
+        if (key.isBlank()) {
             LOGGER.info("It's hard to remove an element whose key I don't know");
             LOGGER.error("Dotfile key is blank, cannot remove dotfile");
 
             return;
         }
+
+        String dotfileKey = sanitise(key, false);
 
         String confirmationMessage = "I hope it goes without saying that there's no Ctrl-Z for this operation";
 

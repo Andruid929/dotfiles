@@ -1,9 +1,6 @@
 package io.github.andruid929.dotfiles;
 
-import io.github.andruid929.dotfiles.commands.ListAllCommand;
-import io.github.andruid929.dotfiles.commands.NewEntryCommand;
-import io.github.andruid929.dotfiles.commands.PurgeCommand;
-import io.github.andruid929.dotfiles.commands.RemoveEntryCommand;
+import io.github.andruid929.dotfiles.commands.*;
 import io.github.andruid929.dotfiles.defaults.FilePaths;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -16,7 +13,9 @@ import picocli.CommandLine.Command;
                 NewEntryCommand.class,
                 PurgeCommand.class,
                 ListAllCommand.class,
-                RemoveEntryCommand.class
+                RemoveEntryCommand.class,
+                UpdateEntryCommand.class,
+                ViewCommand.class
         },
         mixinStandardHelpOptions = true
 )

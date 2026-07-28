@@ -10,7 +10,7 @@ import io.github.andruid929.leutils.wora.PathFinder;
 class PathUtilTest {
 
     @Test
-    void getPathAndFileTest() {
+    void getPathAndFile_shouldSplitPathCorrectly() {
         Path path = Path.of("home", "andrew", ".ssh", "id_rsa");
 
         String[] pathAndFile = PathUtil.getPathAndFile(path);
@@ -23,7 +23,7 @@ class PathUtilTest {
     }
 
     @Test
-    void shortenPathTest() {
+    void shortenPath_shouldUseTildeForHomeDir() {
         String path = Path.of("name/is/andruid929").toString();
 
         String absolutePath = Path.of(PathFinder.USER_HOME, "name/is/andruid929").toString();
@@ -34,7 +34,7 @@ class PathUtilTest {
     }
 
     @Test
-    void expandPathTest() {
+    void expandPath_shouldResolveTildeToHomeDir() {
         String path = "~/name/is/andruid929";
 
         String fullPath = Path.of(PathFinder.USER_HOME, "name", "is", "andruid929").toString();

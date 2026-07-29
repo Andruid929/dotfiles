@@ -14,7 +14,7 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "update", description = "Update a saved file")
-public class UpdateEntryCommand extends CommandAction {
+public final class UpdateEntryCommand extends CommandAction {
 
     @Parameters(index = "0", description = "The key to update")
     String targetKey;

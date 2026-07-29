@@ -8,7 +8,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "view", description = "View details about a saved file")
-public class ViewCommand extends CommandAction {
+public final class ViewCommand extends CommandAction {
 
     @Parameters(index = "0", description = "The key for the file to view")
     String key = null;

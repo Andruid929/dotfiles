@@ -10,7 +10,7 @@ import io.github.andruid929.dotfiles.Worker;
 import picocli.CommandLine.Command;
 
 @Command(name = "list", description = "List all saved files")
-public class ListAllCommand extends CommandAction {
+public final class ListAllCommand extends CommandAction {
 
     @Override
     public void run() {

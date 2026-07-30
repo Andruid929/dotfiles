@@ -31,6 +31,8 @@ public final class PlaceCommand extends CommandAction {
     public void run() {
         if (targetKey == null || targetKey.isBlank()) {
             LOGGER.error("I cannot identify file to place without its key");
+
+            return;
         }
 
         String key = sanitise(targetKey, false);
@@ -55,10 +57,6 @@ public final class PlaceCommand extends CommandAction {
             } else {
                 Path dirs = filePath.getParent();
 
-                if (createMissingDir && Files.notExists(dirs)) {
-                    Files.createDirectories(dirs);
-                }
-
                 confirmation = interpolate("I am about to create {} in '{}', continue? (y/n): ",
                         filePath.getFileName(), dirs);
             }
@@ -68,7 +66,15 @@ public final class PlaceCommand extends CommandAction {
             String response = scanner.next();
 
             switch (response.toLowerCase()) {
-                case "y", "yes" -> placeFile(dotfile.getFileContents(), filePath);
+                case "y", "yes" -> {
+                    Path dirs = filePath.getParent();
+
+                    if (createMissingDir && dirs != null && Files.notExists(dirs)) {
+                        Files.createDirectories(dirs);
+                    }
+
+                    placeFile(dotfile.getFileContents(), filePath);
+                }
                 case "n", "no" -> {
                     LOGGER.info("Place operation cancelled");
 
@@ -79,7 +85,7 @@ public final class PlaceCommand extends CommandAction {
             }
 
         } catch (IOException e) {
-            LOGGER.info("Oof tough luck, something happened");
+            LOGGER.info("Oof tough luck, something bad happened while placing file");
             LOGGER.debug("Error placing dotfile with key '{}' at '{}'", dotfile.getKey(), filePath);
             LOGGER.error("Stacktrace:", e);
         }
@@ -91,13 +97,12 @@ public final class PlaceCommand extends CommandAction {
 
         } catch (FileAlreadyExistsException _) {
             LOGGER.debug("File '{}' already exists, overwriting", file);
+        }
 
-        } finally {
-            if (PathWriter.writeToFile(file, contents)) {
-                String outputMessage = interpolate("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
+        if (PathWriter.writeToFile(file, contents)) {
+            String outputMessage = interpolate("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
 
-                System.out.println(outputMessage);
-            }
+            System.out.println(outputMessage);
         }
     }
 
@@ -116,13 +121,11 @@ public final class PlaceCommand extends CommandAction {
             fullPath = Path.of(pathWithoutHash).resolve(def.getFileName());
 
         } else {
-            fullPath = Path.of(pathOverride);
+            fullPath = Path.of(stringPath);
         }
 
-        Path path = fullPath.getParent();
-
-        if (path == null) {
-            return PathFinder.createPathFromHomeRoot(stringPath);
+        if (!fullPath.isAbsolute() && fullPath.getParent() == null) {
+            return PathFinder.createPathFromHomeRoot(fullPath.toString());
         }
 
         return fullPath;

@@ -86,8 +86,6 @@ public final class Worker {
 
         if (!savedDotfiles.isEmpty()) {
             DOTFILES_SET.addAll(savedDotfiles);
-
-            LOGGER.debug("Number of loaded dotfiles: {}", savedDotfiles.size());
         }
 
     }
@@ -95,9 +93,7 @@ public final class Worker {
     private static Thread gracefulShutdownthread() {
         return Thread.ofVirtual()
                 .name("graceful-shutdown-worker")
-                .uncaughtExceptionHandler((Thread _, Throwable e) -> {
-                    LOGGER.error("Graceful shutdown not so graceful", e);
-                })
+                .uncaughtExceptionHandler((Thread _, Throwable e) -> LOGGER.error("Graceful shutdown not so graceful", e))
                 .unstarted(Worker::serialise);
     }
 }

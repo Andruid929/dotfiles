@@ -1,5 +1,6 @@
 package io.github.andruid929.dotfiles.io;
 
+import static io.github.andruid929.dotfiles.defaults.FilePaths.LOG_FILE;
 import static io.github.andruid929.dotfiles.defaults.FilePaths.SAVE_FILE;
 
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,8 @@ public final class PathReader {
             return Files.readString(filePath);
         } catch (IOException e) {
 
-            LOGGER.error("Stacktrace:", e);
+            LOGGER.error("Error reading '{}':", filePath);
+            LOGGER.error("Stacktrace", e);
 
             return "";
         }
@@ -34,6 +36,10 @@ public final class PathReader {
     @NotNull
     public static String readDotfiles() {
         return readFile(SAVE_FILE);
+    }
+
+    public static String readLogs() {
+        return readFile(LOG_FILE);
     }
 
 }

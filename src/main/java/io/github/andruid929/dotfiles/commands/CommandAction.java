@@ -6,6 +6,8 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 
+import io.github.andruid929.dotfiles.util.PathUtil;
+
 public abstract class CommandAction implements Runnable {
 
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
@@ -13,12 +15,14 @@ public abstract class CommandAction implements Runnable {
     @NotNull
     protected final String sanitise(@NotNull String value, boolean isPath) {
         if (isPath) {
-            Path normalised = Path.of(value.trim()).normalize();
+            String expandedPath = PathUtil.expandPath(value.trim());
+
+            Path normalised = Path.of(expandedPath).normalize();
 
             return normalised.toString();
         }
 
-        return value.trim();
+        return PathUtil.expandPath(value.trim());
     }
 
 }

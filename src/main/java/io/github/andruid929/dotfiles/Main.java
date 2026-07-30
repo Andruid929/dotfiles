@@ -16,7 +16,8 @@ import picocli.CommandLine.Command;
                 RemoveEntryCommand.class,
                 UpdateEntryCommand.class,
                 ViewCommand.class,
-                PlaceCommand.class
+                PlaceCommand.class,
+                LogCommand.class
         },
         mixinStandardHelpOptions = true
 )

@@ -8,6 +8,10 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 
+/**
+ * Utility class for general input/output operations.
+ * Handles creation and deletion of application folders and files.
+ */
 public final class IOUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IOUtil.class);

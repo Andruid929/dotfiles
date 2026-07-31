@@ -9,6 +9,10 @@ import io.github.andruid929.dotfiles.Dotfile;
 import io.github.andruid929.dotfiles.Worker;
 import picocli.CommandLine.Command;
 
+/**
+ * Command to list all currently managed dotfiles.
+ * Displays a table with index, key, and the original file path for each entry.
+ */
 @Command(name = "list", description = "List all saved files")
 public final class ListAllCommand extends CommandAction {
 

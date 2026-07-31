@@ -15,6 +15,10 @@ import java.util.Objects;
 import io.github.andruid929.dotfiles.errors.BlankValueException;
 import io.github.andruid929.dotfiles.util.PathUtil;
 
+/**
+ * Represents a managed configuration file (dotfile).
+ * Stores the file's content, its original path, and a unique key for identification.
+ */
 public final class Dotfile {
 
     @NotNull
@@ -26,6 +30,15 @@ public final class Dotfile {
     @NotNull
     private Path pathToFile;
 
+    /**
+     * Creates a new Dotfile entry.
+     *
+     * @param key          a unique identifier for the dotfile.
+     * @param fileContents the text content of the file.
+     * @param filePath     the directory path where the file is located.
+     * @param filename     the name of the file.
+     * @throws BlankValueException if key or fileContents are blank.
+     */
     @JsonCreator
     public Dotfile(
             @NotNull @JsonProperty("key") String key,
@@ -52,6 +65,9 @@ public final class Dotfile {
         }
     }
 
+    /**
+     * @return the full {@link Path} to the file.
+     */
     @JsonIgnore
     public @NotNull Path getPathToFile() {
         return Path.of(getFilePath(), getFilename());

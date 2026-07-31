@@ -15,6 +15,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+/**
+ * Command to restore a dotfile from the internal storage to its original or an overridden location.
+ * Includes a confirmation step before overwriting existing files.
+ */
 @Command(name = "place", description = "Place the file at the location saved")
 public final class PlaceCommand extends CommandAction {
 

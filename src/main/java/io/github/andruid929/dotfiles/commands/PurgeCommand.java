@@ -7,6 +7,10 @@ import io.github.andruid929.leutils.wora.PathFinder;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+/**
+ * Command to delete application data, such as save files and log files.
+ * Provides options to exclude either the log file or the save file from deletion.
+ */
 @Command(name = "purge", description = "Delete this program's save and log files or exclude either")
 public final class PurgeCommand extends CommandAction {
 

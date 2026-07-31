@@ -13,6 +13,10 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+/**
+ * Command to update an existing dotfile entry.
+ * Can be used to change the key, file path, or refresh the stored content from the disk.
+ */
 @Command(name = "update", description = "Update a saved file")
 public final class UpdateEntryCommand extends CommandAction {
 

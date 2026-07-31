@@ -5,6 +5,10 @@ import io.github.andruid929.dotfiles.defaults.FilePaths;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
+/**
+ * The main entry point for the Dotfiles application.
+ * This class handles command-line argument parsing using picocli and initializes the application worker.
+ */
 @Command(
         name = "dotfiles",
         description = "Save and restore config files",
@@ -34,6 +38,12 @@ public class Main implements Runnable {
         System.setProperty("CONSOLE_LOG_PATTERN", CONSOLE_LOG_PATTERN);
     }
 
+    /**
+     * Entry point of the application.
+     * Initializes the {@link Worker}, executes the command, and ensures a graceful shutdown.
+     *
+     * @param args command-line arguments.
+     */
     public static void main(String[] args) {
         Worker.start();
 

@@ -4,6 +4,9 @@ import java.nio.file.Path;
 
 import io.github.andruid929.leutils.wora.PathFinder;
 
+/**
+ * Defines default file names and paths used by the application for storage and logging.
+ */
 public class FilePaths {
 
     public static final String APP_FOLDER_NAME = "dotfiles";

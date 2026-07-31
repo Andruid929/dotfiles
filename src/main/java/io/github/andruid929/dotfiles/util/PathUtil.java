@@ -10,6 +10,10 @@ import java.util.regex.Matcher;
 import io.github.andruid929.dotfiles.annotations.Blankable;
 import io.github.andruid929.leutils.wora.PathFinder;
 
+/**
+ * Utility class for path manipulation.
+ * Includes methods for expanding/shortening home directory references (~) and handling file separators.
+ */
 public final class PathUtil {
 
     private static final String DEFAULT_DIR = PathFinder.USER_HOME;

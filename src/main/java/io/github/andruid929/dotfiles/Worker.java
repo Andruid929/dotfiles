@@ -14,6 +14,10 @@ import io.github.andruid929.dotfiles.io.PathReader;
 import io.github.andruid929.dotfiles.io.PathWriter;
 import io.github.andruid929.dotfiles.transformer.JsonTransformer;
 
+/**
+ * The orchestrator for managing dotfiles in memory and coordinating persistence.
+ * This class handles loading from and saving to the local storage.
+ */
 public final class Worker {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Worker.class);
@@ -46,6 +50,10 @@ public final class Worker {
                 .ifPresentOrElse(operation, () -> LOGGER.info("File with key '{}' not found", key));
     }
 
+    /**
+     * Initializes the worker, sets up a shutdown hook for automatic saving,
+     * and loads dotfiles from storage.
+     */
     public static void start() {
         Runtime.getRuntime().addShutdownHook(gracefulShutdownthread());
 
@@ -56,6 +64,9 @@ public final class Worker {
         deserialise();
     }
 
+    /**
+     * Shuts down the worker and ensures all current dotfiles are saved.
+     */
     public static void dismiss() {
         serialise();
     }

@@ -7,6 +7,9 @@ import io.github.andruid929.dotfiles.io.PathReader;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+/**
+ * Command to locate and optionally read the application log file.
+ */
 @Command(name = "logs", description = "Locate the log file")
 public class LogCommand extends CommandAction {
 

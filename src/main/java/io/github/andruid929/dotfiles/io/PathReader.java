@@ -13,6 +13,10 @@ import java.nio.file.Path;
 
 import io.github.andruid929.dotfiles.annotations.Blankable;
 
+/**
+ * Utility class for reading files from the file system.
+ * Provides specific methods for reading the dotfiles save file and logs.
+ */
 public final class PathReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PathReader.class);

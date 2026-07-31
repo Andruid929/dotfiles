@@ -18,6 +18,10 @@ import java.util.Set;
 import io.github.andruid929.dotfiles.Dotfile;
 import io.github.andruid929.dotfiles.annotations.Blankable;
 
+/**
+ * Utility class for converting between Dotfile objects and JSON strings.
+ * Uses Jackson for JSON processing.
+ */
 public final class JsonTransformer {
 
     public static final TypeReference<Set<Dotfile>> DOT_FILES_TYPE = new TypeReference<>() {

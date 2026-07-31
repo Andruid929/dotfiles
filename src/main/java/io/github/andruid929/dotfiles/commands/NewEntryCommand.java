@@ -13,6 +13,10 @@ import io.github.andruid929.dotfiles.util.PathUtil;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+/**
+ * Command to save a new configuration file into the dotfiles manager.
+ * Reads the content of the specified file and stores it with a unique key.
+ */
 @Command(name = "save", description = "Save new config")
 public final class NewEntryCommand extends CommandAction {
 

@@ -6,6 +6,10 @@ import io.github.andruid929.dotfiles.Worker;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
+/**
+ * Command to remove a dotfile entry from the manager's internal storage.
+ * Does NOT delete the physical file from the disk.
+ */
 @Command(name = "remove", description = "Remove a saved file")
 public final class RemoveEntryCommand extends CommandAction {
 

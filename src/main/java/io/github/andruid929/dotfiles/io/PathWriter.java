@@ -13,6 +13,10 @@ import java.nio.file.StandardOpenOption;
 
 import io.github.andruid929.dotfiles.defaults.FilePaths;
 
+/**
+ * Utility class for writing content to files on the file system.
+ * Handles writing to dotfiles save file and general file writing with overwriting capabilities.
+ */
 public final class PathWriter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PathWriter.class);

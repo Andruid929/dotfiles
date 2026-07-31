@@ -7,6 +7,10 @@ import io.github.andruid929.dotfiles.Worker;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
+/**
+ * Command to view the details and content of a saved dotfile.
+ * Displays the key, file path, and the full content of the dotfile.
+ */
 @Command(name = "view", description = "View details about a saved file")
 public final class ViewCommand extends CommandAction {
 

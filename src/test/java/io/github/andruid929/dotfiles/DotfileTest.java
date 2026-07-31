@@ -2,6 +2,8 @@ package io.github.andruid929.dotfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import static io.github.andruid929.dotfiles.util.PathUtil.handleSeparators;
+
 import org.junit.jupiter.api.Test;
 
 import io.github.andruid929.dotfiles.errors.BlankValueException;
@@ -15,7 +17,7 @@ class DotfileTest {
         assertEquals("mykey", dotfile.getKey());
         assertEquals("content", dotfile.getFileContents());
         assertEquals("file.txt", dotfile.getFilename());
-        assertEquals("/path/to", dotfile.getFilePath());
+        assertEquals(handleSeparators("/path/to"), dotfile.getFilePath());
     }
 
     @Test
@@ -34,7 +36,7 @@ class DotfileTest {
     void setFilePath_shouldUpdatePath() {
         Dotfile dotfile = new Dotfile("key", "content", "/old/path", "file.txt");
         dotfile.setFilePath("/new/path");
-        assertEquals("/new/path", dotfile.getFilePath());
+        assertEquals(handleSeparators("/new/path"), dotfile.getFilePath());
         assertEquals("file.txt", dotfile.getFilename());
     }
 
@@ -51,7 +53,7 @@ class DotfileTest {
         Dotfile dotfile = new Dotfile("key", "content", "/path", "oldfile.txt");
         dotfile.setFilename("newfile.txt");
         assertEquals("newfile.txt", dotfile.getFilename());
-        assertEquals("/path", dotfile.getFilePath());
+        assertEquals(handleSeparators("/path"), dotfile.getFilePath());
     }
 
     @Test

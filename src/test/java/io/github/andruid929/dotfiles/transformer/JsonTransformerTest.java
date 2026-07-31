@@ -8,14 +8,16 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Set;
+import java.util.regex.Matcher;
 
 import io.github.andruid929.dotfiles.Dotfile;
+import io.github.andruid929.dotfiles.defaults.Constants;
 
 class JsonTransformerTest {
 
     @Test
     void roundTrip_shouldPreserveData() {
-        String path = interpolate("name{}andrew", File.separator);
+        String path = interpolate("name{}andrew", Constants.FILE_SEPARATOR);
 
         var dotfile = new Dotfile("test file", "Hello world",
                 path, "file.sql");

@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.util.regex.Matcher;
 
 import io.github.andruid929.dotfiles.annotations.Blankable;
+import io.github.andruid929.dotfiles.defaults.Constants;
 import io.github.andruid929.leutils.wora.PathFinder;
 
 /**
@@ -61,8 +62,10 @@ public final class PathUtil {
             return PathFinder.USER_HOME;
         }
 
-        if (pathString.startsWith("~".concat(File.separator))) {
-            String fromUserHome = pathString.substring(2); //Remove the tilde and first slash
+        String correctedSeparators = handleSeparators(pathString);
+
+        if (correctedSeparators.startsWith("~".concat(File.separator))) {
+            String fromUserHome = correctedSeparators.substring(2); //Remove the tilde and first slash
 
             Path expandedPath = PathFinder.createPathFromHomeRoot(fromUserHome).normalize();
 

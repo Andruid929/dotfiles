@@ -90,8 +90,6 @@ public final class UpdateEntryCommand extends CommandAction {
 
         dotfile.setFilePath(filepath);
         dotfile.setFilename(filename);
-
-        LOGGER.info("Updated File path");
     }
 
     private void setContents(@NotNull Dotfile dotfile) {

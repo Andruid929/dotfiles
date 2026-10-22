@@ -1,0 +1,112 @@
+# Build & Dependencies
+
+## Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+dependency-reduced-pom.xml
+
+## Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+## Common
+*.class
+classes/
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+
+# IDEs
+
+## IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+*.un~
+
+## Eclipse
+.apt_generated
+.classpath
+.classpath~
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+## NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+## VS Code
+.vscode/
+
+# Java Runtime & Logs
+*.log
+*.log.*
+logs/
+hs_err_pid*.log
+hs_err_*.log
+replay_pid*.log
+replay_*.log
+*.hprof
+*.jfr
+
+# Environment & Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+settings.xml
+
+# OS-specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editor Temp Files
+*.swp
+*.swo
+*~
+*.tmp
+
+# Language-specific
+.kotlin
+
+# Custom (Andrew's)
+
+## AI agents
+.junie/
+CLAUDE.md
+AGENTS.md
+
+## Placeholders and drafts
+*.temp
+*.noversion
+Testing.java
+*UNDEFINED
+
+# Project-specific (customize per project)
+credentials.json
+tokens/

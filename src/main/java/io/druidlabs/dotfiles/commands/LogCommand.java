@@ -2,7 +2,7 @@ package io.druidlabs.dotfiles.commands;
 
 import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
 
-import io.druidlabs.dotfiles.defaults.FilePaths;
+import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.io.PathReader;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;

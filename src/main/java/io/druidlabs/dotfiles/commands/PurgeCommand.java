@@ -1,9 +1,11 @@
 package io.druidlabs.dotfiles.commands;
 
+import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.Scanner;
 
-import io.druidlabs.dotfiles.io.IOUtil;
-import io.github.andruid929.leutils.wora.PathFinder;
+import io.druidlabs.dotfiles.constants.FilePaths;
+import io.druidlabs.dotfiles.io.IOTasks;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
@@ -15,30 +17,30 @@ import picocli.CommandLine.Option;
 public final class PurgeCommand extends CommandAction {
 
     @Option(names = {"-l", "--log"}, description = "Don't delete the logs file")
-    private boolean excludeLog = false;
+    boolean excludeLog = false;
 
     @Option(names = {"-s", "--save"}, description = "Don't delete the save file")
-    private boolean excludeSave = false;
+    boolean excludeSave = false;
 
     @Override
     public void run() {
         if (excludeSave && excludeLog) {
-            LOGGER.info("I have nothing to purge, bye");
+            tellUser("I have nothing to purge, bye");
 
             return;
         }
 
-        LOGGER.info("I will purge:");
+        tellUser("I will purge:");
 
         if (!excludeLog) {
-            LOGGER.info("Log file");
+            tellUser("Log file");
         }
 
         if (!excludeSave) {
-            LOGGER.info("Save file");
+            tellUser("Save file");
         }
 
-        System.out.println();
+        tellUser("");
 
         System.out.print("Are you sure? (y/n) -> ");
 
@@ -50,24 +52,37 @@ public final class PurgeCommand extends CommandAction {
             switch (response) {
                 case "y", "yes" -> {
 
-                    PathFinder.createPathFromHomeRoot("/");
-
                     if (!excludeSave) {
+                        try {
+                            IOTasks.deleteFile(FilePaths.SAVE_FILE);
 
-                        if (IOUtil.deleteDotfiles()) {
-                            LOGGER.info("Purged saved files");
+                            tellUser("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
 
-                        } else {
-                            LOGGER.info("So uhm, I couldn't purge the save file");
+                        } catch (IOException ex) {
+                            if (ex instanceof NoSuchFileException e) {
+
+                                tellUserOfErrors("Cannot delete save file '{}' because it doesn't exist", e.getFile());
+                            } else {
+
+                                tellUserOfErrors("Unable to delete save file");
+                            }
                         }
                     }
 
                     if (!excludeLog) {
-                        if (IOUtil.deleteLogFile()) {
-                            LOGGER.info("Successfully purged logs file");
+                        try {
+                            IOTasks.deleteFile(FilePaths.LOG_FILE);
 
-                        } else {
-                            LOGGER.info("So uhm, I couldn't purge the log file");
+                            tellUser("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
+
+                        } catch (IOException ex) {
+                            if (ex instanceof NoSuchFileException e) {
+
+                                tellUserOfErrors("Cannot delete log file '{}' because it doesn't exist", e.getFile());
+                            } else {
+
+                                tellUserOfErrors("Unable to delete log file");
+                            }
                         }
                     }
 

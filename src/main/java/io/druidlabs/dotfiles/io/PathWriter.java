@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import io.druidlabs.dotfiles.defaults.FilePaths;
+import io.druidlabs.dotfiles.constants.FilePaths;
 
 /**
  * Utility class for writing content to files on the file system.

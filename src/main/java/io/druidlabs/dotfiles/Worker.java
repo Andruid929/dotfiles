@@ -1,18 +1,25 @@
 package io.druidlabs.dotfiles;
 
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.FileSystemException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
-import io.druidlabs.dotfiles.io.IOUtil;
+import io.druidlabs.dotfiles.io.IOTasks;
 import io.druidlabs.dotfiles.io.PathReader;
 import io.druidlabs.dotfiles.io.PathWriter;
 import io.druidlabs.dotfiles.transformer.JsonTransformer;
+import io.druidlabs.dotfiles.util.ExceptionUtil;
+import io.druidlabs.dotfiles.util.UserNotification;
+import picocli.CommandLine;
 
 /**
  * The orchestrator for managing dotfiles in memory and coordinating persistence.
@@ -55,9 +62,34 @@ public final class Worker {
      * and loads dotfiles from storage.
      */
     public static void start() {
-        Runtime.getRuntime().addShutdownHook(gracefulShutdownthread());
+        try {
+            IOTasks.validateAppPaths();
 
-        IOUtil.validateAppPaths();
+        } catch (IOException ioe) {
+            if (ioe instanceof FileSystemException fse) {
+
+                String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
+
+                String failedFile = fse.getFile();
+
+                String message;
+
+                if (failedFile != null) {
+                    message = interpolate("Unable to create '{}' because '{}'. Exiting", failedFile, reason);
+
+                } else {
+                    message = reason;
+                }
+
+                UserNotification.notifyUserOfError(message);
+
+                System.exit(CommandLine.ExitCode.SOFTWARE);
+            }
+
+            UserNotification.notifyUserOfError("Error occurred creating program files");
+
+            System.exit(CommandLine.ExitCode.SOFTWARE);
+        }
 
         DOTFILES_SET = ConcurrentHashMap.newKeySet();
 
@@ -99,12 +131,5 @@ public final class Worker {
             DOTFILES_SET.addAll(savedDotfiles);
         }
 
-    }
-
-    private static Thread gracefulShutdownthread() {
-        return Thread.ofVirtual()
-                .name("graceful-shutdown-worker")
-                .uncaughtExceptionHandler((Thread _, Throwable e) -> LOGGER.error("Graceful shutdown not so graceful", e))
-                .unstarted(Worker::serialise);
     }
 }

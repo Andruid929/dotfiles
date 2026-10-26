@@ -1,7 +1,7 @@
 package io.druidlabs.dotfiles.io;
 
-import static io.druidlabs.dotfiles.defaults.FilePaths.LOG_FILE;
-import static io.druidlabs.dotfiles.defaults.FilePaths.SAVE_FILE;
+import static io.druidlabs.dotfiles.constants.FilePaths.LOG_FILE;
+import static io.druidlabs.dotfiles.constants.FilePaths.SAVE_FILE;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;

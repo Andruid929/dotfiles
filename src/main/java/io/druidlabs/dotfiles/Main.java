@@ -1,7 +1,11 @@
 package io.druidlabs.dotfiles;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.druidlabs.dotfiles.commands.*;
-import io.druidlabs.dotfiles.defaults.FilePaths;
+import io.druidlabs.dotfiles.constants.FilePaths;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
@@ -45,20 +49,32 @@ public class Main implements Runnable {
      * @param args command-line arguments.
      */
     public static void main(String[] args) {
-        Worker.start();
+        int exitCode;
 
-        int exitCode = new CommandLine(new Main()).execute(args);
+        try {
+            Worker.start();
 
-        Worker.dismiss();
+            exitCode = new CommandLine(new Main()).execute(args);
+
+            Worker.dismiss();
+
+            System.exit(exitCode);
+
+        } catch (Exception e) {
+            exitCode = CommandLine.ExitCode.SOFTWARE;
+
+            UserNotification.notifyUserOfError("Unexpected error occurred");
+
+            Logger unhandledExceptionLogger = LoggerFactory.getLogger("UnhandledExceptionReporter");
+
+            unhandledExceptionLogger.error("Unhandled exception thrown", e);
+        }
 
         System.exit(exitCode);
     }
 
     @Override
     public void run() {
-        System.out.println("Dotfiles: Save your configs");
-        System.out.println();
-
-        main(new String[]{"-h"});
+        System.out.println("Missing action, run with -h to see help");
     }
 }

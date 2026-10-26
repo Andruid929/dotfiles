@@ -30,13 +30,13 @@ The executable JAR will be located in the `target` directory.
 Run the tool using the generated JAR:
 
 ```bash
-java -jar target/dot-files-1.0-SNAPSHOT.jar [COMMAND] [OPTIONS]
+java -jar target/dotfiles.jar [COMMAND] [OPTIONS]
 ```
 
 **Hint:** You can set an alias to avoid typing down the entire command each time
 
 ```bash
-alias dotfiles="java -jar target/dot-files.jar"
+alias dotfiles="java -jar target/dotfiles.jar"
 ```
 
 And then simply run

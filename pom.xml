@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.druidlabs</groupId>
-    <artifactId>dot-files</artifactId>
+    <artifactId>dotfiles</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <properties>

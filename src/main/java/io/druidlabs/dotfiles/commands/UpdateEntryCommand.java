@@ -1,11 +1,8 @@
 package io.druidlabs.dotfiles.commands;
 
-import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
-
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
@@ -99,16 +96,8 @@ public final class UpdateEntryCommand extends CommandAction {
                             exitCode.set(ExitCode.USAGE);
 
                         } catch (IOException e) {
-                            String message;
-
-                            if (e instanceof FileSystemException fse) {
-                                String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
-
-                                message = interpolate("Failed to update contents: {}", reason.toLowerCase());
-                            } else {
-
-                                message = "Failed to update contents, IO error occurred";
-                            }
+                            String message = ExceptionUtil.describeIOFailure(e, "Failed to update contents: {}",
+                                    "Failed to update contents, IO error occurred");
 
                             UserNotification.notifyUserOfError(message);
 

@@ -4,7 +4,6 @@ import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolat
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
@@ -97,15 +96,10 @@ public final class PlaceCommand extends CommandAction {
 
         } catch (IOException e) {
 
-            if (e instanceof FileSystemException fse) {
-                String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
+            String message = ExceptionUtil.describeIOFailure(e, "Oof tough luck, something bad happened while placing file: {}",
+                    "Oof tough luck, something bad happened while placing file");
 
-                UserNotification.notifyUserOfError("Oof tough luck, something bad happened while placing file: {}", reason);
-
-            } else {
-                UserNotification.notifyUserOfError("Oof tough luck, something bad happened while placing file");
-            }
-
+            UserNotification.notifyUserOfError(message);
 
             String logMessage = interpolate("Error placing dotfile with key '{}' at '{}'", dotfile.getKey(), filePath);
 

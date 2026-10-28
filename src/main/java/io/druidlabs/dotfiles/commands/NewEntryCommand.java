@@ -5,7 +5,6 @@ import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolat
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -53,16 +52,7 @@ public final class NewEntryCommand extends CommandAction {
                 content = Files.readString(fileToRead);
 
             } catch (IOException e) {
-                String message;
-
-                if (e instanceof FileSystemException fse) {
-                    String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
-
-                    message = interpolate("Failed to read target file because {}", reason.toLowerCase());
-                } else {
-
-                    message = "Failed to read target file";
-                }
+                String message = ExceptionUtil.describeIOFailure(e, "Failed to read target file because {}", "Failed to read target file");
 
                 UserNotification.notifyUserOfError(message);
 

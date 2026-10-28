@@ -1,9 +1,6 @@
 package io.druidlabs.dotfiles.commands;
 
-import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
-
 import java.io.IOException;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 
 import io.druidlabs.dotfiles.constants.FilePaths;
@@ -34,15 +31,7 @@ public class LogCommand extends CommandAction {
                 logContents = Files.readString(FilePaths.LOG_FILE);
 
             } catch (IOException e) {
-                String message;
-
-                if (e instanceof FileSystemException fse) {
-                    String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
-
-                    message = interpolate("Failed to read log file because {}", reason.toLowerCase());
-                } else {
-                    message = "Failed to read log file";
-                }
+                String message = ExceptionUtil.describeIOFailure(e, "Failed to read log file because {}", "Failed to read log file");
 
                 UserNotification.notifyUserOfError(message);
 

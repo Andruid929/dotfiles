@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
+
 import io.druidlabs.dotfiles.exceptions.BlankValueException;
 import io.github.andruid929.leutils.wora.PathFinder;
 
@@ -11,11 +13,13 @@ class DotfileTest {
 
     @Test
     void constructor_shouldSetFields() {
-        Dotfile dotfile = new Dotfile("mykey", "content", "/path/to", "file.txt");
+        String path = Path.of("/path/to").toString();
+
+        Dotfile dotfile = new Dotfile("mykey", "content", path, "file.txt");
         assertEquals("mykey", dotfile.getKey());
         assertEquals("content", dotfile.getFileContents());
         assertEquals("file.txt", dotfile.getFilename());
-        assertEquals("/path/to", dotfile.getFilePath());
+        assertEquals(path, dotfile.getFilePath());
     }
 
     @Test
@@ -32,9 +36,12 @@ class DotfileTest {
 
     @Test
     void setFilePath_shouldUpdatePath() {
-        Dotfile dotfile = new Dotfile("key", "content", "/old/path", "file.txt");
-        dotfile.setFilePath("/new/path");
-        assertEquals("/new/path", dotfile.getFilePath());
+        Dotfile dotfile = new Dotfile("key", "content", Path.of("/old/path").toString(), "file.txt");
+
+        String newPath = Path.of("/new/path").toString();
+
+        dotfile.setFilePath(newPath);
+        assertEquals(newPath, dotfile.getFilePath());
         assertEquals("file.txt", dotfile.getFilename());
     }
 
@@ -48,10 +55,12 @@ class DotfileTest {
 
     @Test
     void setFilename_shouldUpdateFilename() {
-        Dotfile dotfile = new Dotfile("key", "content", "/path", "oldfile.txt");
+        String path = Path.of("/path").toString();
+
+        Dotfile dotfile = new Dotfile("key", "content", path, "oldfile.txt");
         dotfile.setFilename("newfile.txt");
         assertEquals("newfile.txt", dotfile.getFilename());
-        assertEquals("/path", dotfile.getFilePath());
+        assertEquals(path, dotfile.getFilePath());
     }
 
     @Test

@@ -58,7 +58,7 @@ public final class PathUtil {
             return PathFinder.USER_HOME;
         }
 
-        if (pathString.startsWith("~".concat(File.separator))) {
+        if (pathString.startsWith("~/")) {
             String fromUserHome = pathString.substring(2); //Remove the tilde and first slash
 
             Path expandedPath = PathFinder.createPathFromHomeRoot(fromUserHome).normalize();

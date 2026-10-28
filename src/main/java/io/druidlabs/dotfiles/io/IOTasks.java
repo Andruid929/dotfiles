@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.LoggerContext;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.Appender;
 import io.druidlabs.dotfiles.util.LoggerUtil;
 
 /**
@@ -89,7 +85,7 @@ public final class IOTasks {
         restrictFolderToOwner(path);
     }
 
-    private static void restrictFolderToOwner(@NotNull Path path) throws IOException {
+    public static void restrictFolderToOwner(@NotNull Path path) throws IOException {
         if (Files.notExists(path)) {
             throw new NoSuchFileException("Cannot set permissions for a non-existent folder");
         }

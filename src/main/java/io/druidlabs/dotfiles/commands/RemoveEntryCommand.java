@@ -3,6 +3,8 @@ package io.druidlabs.dotfiles.commands;
 import java.util.Scanner;
 
 import io.druidlabs.dotfiles.Worker;
+import io.druidlabs.dotfiles.util.UserNotification;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
@@ -17,25 +19,28 @@ public final class RemoveEntryCommand extends CommandAction {
     String key;
 
     @Override
-    public void run() {
+    public Integer call() {
         if (key.isBlank()) {
-            LOGGER.info("It's hard to remove an element whose key I don't know");
-            LOGGER.error("Dotfile key is blank, cannot remove dotfile");
+            UserNotification.notifyUser("It's hard to remove an element whose key I don't know");
 
-            return;
+            return CommandLine.ExitCode.OK;
         }
 
         String dotfileKey = sanitise(key, false);
 
         String confirmationMessage = "I hope it goes without saying that there's no Ctrl-Z for this operation";
 
-        System.out.println(confirmationMessage);
-        System.out.print("Are you sure? (y/n) -> ");
-
         try (Scanner scanner = new Scanner(System.in)) {
-            String response = scanner.next();
+            String response;
 
-            System.out.println();
+            do {
+                UserNotification.notifyUser(confirmationMessage);
+                System.out.print("Are you sure? (y/n) -> ");
+
+                response = scanner.next();
+
+                UserNotification.notifyUser("");
+            } while (isInvalidConfirmation(response));
 
             switch (response.toLowerCase()) {
 
@@ -51,9 +56,9 @@ public final class RemoveEntryCommand extends CommandAction {
                 }
 
                 case "n", "no", "nope", "nah" -> LOGGER.info("Remove operation cancelled");
-
-                default -> LOGGER.info("It's a yes or no question but okay... goodbye");
             }
+
+            return CommandLine.ExitCode.OK;
         }
     }
 

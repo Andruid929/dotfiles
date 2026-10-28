@@ -1,15 +1,23 @@
 package io.druidlabs.dotfiles.commands;
 
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
+
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.druidlabs.dotfiles.Dotfile;
 import io.druidlabs.dotfiles.Worker;
-import io.druidlabs.dotfiles.io.PathReader;
+import io.druidlabs.dotfiles.util.ExceptionUtil;
 import io.druidlabs.dotfiles.util.PathUtil;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -33,13 +41,16 @@ public final class UpdateEntryCommand extends CommandAction {
     boolean doNotRead = false;
 
     @Override
-    public void run() {
+    public Integer call() {
         if (targetKey.isBlank()) {
-            LOGGER.info("Key cannot be blank");
-            LOGGER.error("Cannot update dotfile with blank key");
+            UserNotification.notifyUser("Key cannot be blank");
+
+            return ExitCode.USAGE;
         }
 
         String key = sanitise(targetKey, false);
+
+        AtomicInteger exitCode = new AtomicInteger();
 
         Worker.updateDotfile(key, dotfile -> {
             String currentKey = dotfile.getKey();
@@ -51,7 +62,7 @@ public final class UpdateEntryCommand extends CommandAction {
                 if (!k.equalsIgnoreCase(currentKey)) {
                     dotfile.setKey(k);
 
-                    LOGGER.info("Key '{}' updated to '{}'", currentKey, k);
+                    UserNotification.notifyUser("Key '{}' updated to '{}'", currentKey, k);
                 }
             }
 
@@ -65,21 +76,54 @@ public final class UpdateEntryCommand extends CommandAction {
 
             if (!doNotRead) {
                 Scanner scanner = new Scanner(System.in);
-                System.out.print("Any changes in the file will overwrite your saved files, are you sure? (y/n): ");
 
-                String response = scanner.next();
+                String response;
+
+                do {
+                    System.out.print("Any changes in the file will overwrite your saved files, are you sure? (y/n): ");
+
+                    response = scanner.next();
+                } while (isInvalidConfirmation(response));
+
                 scanner.close();
 
                 switch (response.toLowerCase()) {
-
                     case "y", "yes" -> {
-                        setContents(dotfile);
+
+                        try {
+                            setContents(dotfile);
+
+                        } catch (IllegalArgumentException e) {
+                            UserNotification.notifyUserOfError("File '{}' is blank, cannot update dotfile");
+
+                            exitCode.set(ExitCode.USAGE);
+
+                        } catch (IOException e) {
+                            String message;
+
+                            if (e instanceof FileSystemException fse) {
+                                String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
+
+                                message = interpolate("Failed to update contents: {}", reason.toLowerCase());
+                            } else {
+
+                                message = "Failed to update contents, IO error occurred";
+                            }
+
+                            UserNotification.notifyUserOfError(message);
+
+                            LOGGER.error(message, e);
+
+                            exitCode.set(ExitCode.SOFTWARE);
+                        }
+
                     }
-                    case "n", "no" -> LOGGER.info("File update cancelled");
-                    default -> LOGGER.info("'{}' is not a valid answer", response);
+                    case "n", "no" -> UserNotification.notifyUser("File update cancelled");
                 }
             }
         });
+
+        return exitCode.get();
     }
 
     private void setPathAndFilename(@NotNull String newPath, @NotNull Dotfile dotfile) {
@@ -92,15 +136,13 @@ public final class UpdateEntryCommand extends CommandAction {
         dotfile.setFilename(filename);
     }
 
-    private void setContents(@NotNull Dotfile dotfile) {
+    private void setContents(@NotNull Dotfile dotfile) throws IOException, IllegalArgumentException {
         Path path = dotfile.getPathToFile();
 
-        String contents = PathReader.readFile(path);
+        String contents = Files.readString(path);
 
         if (contents.isBlank()) {
-            LOGGER.info("Update cancelled, something isn't right");
-
-            return;
+            throw new IllegalArgumentException();
         }
 
         dotfile.setFileContents(contents);

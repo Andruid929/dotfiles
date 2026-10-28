@@ -12,7 +12,7 @@ import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Objects;
 
-import io.druidlabs.dotfiles.errors.BlankValueException;
+import io.druidlabs.dotfiles.exceptions.BlankValueException;
 import io.druidlabs.dotfiles.util.PathUtil;
 
 /**

@@ -4,7 +4,9 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import io.druidlabs.dotfiles.Worker;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Parameters;
 
 /**
@@ -18,11 +20,11 @@ public final class ViewCommand extends CommandAction {
     String key = null;
 
     @Override
-    public void run() {
+    public Integer call() {
         if (key == null) {
             LOGGER.info("Please specify a key to view");
 
-            return;
+            return ExitCode.USAGE;
         }
 
         String k = sanitise(key, false);
@@ -30,17 +32,19 @@ public final class ViewCommand extends CommandAction {
         var dotfile = Worker.getDotfile(k);
 
         if (dotfile == null) {
-            LOGGER.info("File with key '{}' not found", k);
+            UserNotification.notifyUser("File with key '{}' not found", k);
 
-            return;
+            return ExitCode.OK;
         }
 
         LOGGER.debug("Viewing dotfile with key '{}'", k);
 
-        System.out.println(formatData("Key", "File location"));
-        System.out.println(formatData(dotfile.getKey(), dotfile.getPathToFile()));
-        System.out.println("--------------");
-        System.out.println(dotfile.getFileContents());
+        UserNotification.notifyUser(formatData("Key", "File location"));
+        UserNotification.notifyUser(formatData(dotfile.getKey(), dotfile.getPathToFile()));
+        UserNotification.notifyUser("--------------");
+        UserNotification.notifyUser(dotfile.getFileContents());
+
+        return ExitCode.OK;
     }
 
     @NotNull

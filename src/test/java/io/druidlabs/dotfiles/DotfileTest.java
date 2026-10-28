@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import org.junit.jupiter.api.Test;
 
-import io.druidlabs.dotfiles.errors.BlankValueException;
+import io.druidlabs.dotfiles.exceptions.BlankValueException;
 import io.github.andruid929.leutils.wora.PathFinder;
 
 class DotfileTest {

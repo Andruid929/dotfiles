@@ -36,7 +36,7 @@
         <appender-ref ref="CONSOLE_ERR"/>
     </logger>
 
-    <logger name="net.druidlabs" level="DEBUG"/>
+    <logger name="io.druidlabs" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="FILE"/>

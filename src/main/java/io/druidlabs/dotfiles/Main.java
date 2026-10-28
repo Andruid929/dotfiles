@@ -44,11 +44,11 @@ public class Main implements Runnable {
 
     /**
      * Entry point of the application.
-     * Initializes the {@link Worker}, executes the command, and ensures a graceful shutdown.
+     * Initialises the {@link Worker}, executes the command, and ensures a graceful shutdown.
      *
      * @param args command-line arguments.
      */
-    public static void main(String[] args) {
+    static void main(String[] args) {
         int exitCode;
 
         try {
@@ -57,10 +57,8 @@ public class Main implements Runnable {
             exitCode = new CommandLine(new Main()).execute(args);
 
             Worker.dismiss();
-
-            System.exit(exitCode);
-
         } catch (Exception e) {
+
             exitCode = CommandLine.ExitCode.SOFTWARE;
 
             UserNotification.notifyUserOfError("Unexpected error occurred");

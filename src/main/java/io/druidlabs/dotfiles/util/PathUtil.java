@@ -7,7 +7,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.regex.Matcher;
 
-import io.druidlabs.dotfiles.annotations.Blankable;
 import io.github.andruid929.leutils.wora.PathFinder;
 
 /**
@@ -37,7 +36,6 @@ public final class PathUtil {
         return new String[]{filepath.toString(), filename.toString()};
     }
 
-    @Blankable
     public static @NotNull String shortenPath(@NotNull String pathString) {
         if (pathString.isBlank()) {
             return "~";
@@ -55,7 +53,6 @@ public final class PathUtil {
 
     }
 
-    @Blankable
     public static @NotNull String expandPath(@NotNull String pathString) {
         if (pathString.isBlank() || pathString.equals("~")) {
             return PathFinder.USER_HOME;

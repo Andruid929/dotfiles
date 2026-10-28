@@ -6,7 +6,9 @@ import java.util.Scanner;
 
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.io.IOTasks;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
 /**
@@ -23,48 +25,51 @@ public final class PurgeCommand extends CommandAction {
     boolean excludeSave = false;
 
     @Override
-    public void run() {
+    public Integer call() {
         if (excludeSave && excludeLog) {
-            tellUser("I have nothing to purge, bye");
+            UserNotification.notifyUser("I have nothing to purge, bye");
 
-            return;
+            return ExitCode.OK;
         }
 
-        tellUser("I will purge:");
+        UserNotification.notifyUser("I will purge:");
 
         if (!excludeLog) {
-            tellUser("Log file");
+            UserNotification.notifyUser("Log file");
         }
 
         if (!excludeSave) {
-            tellUser("Save file");
+            UserNotification.notifyUser("Save file");
         }
 
-        tellUser("");
-
-        System.out.print("Are you sure? (y/n) -> ");
+        UserNotification.notifyUser("");
 
         try (Scanner scanner = new Scanner(System.in)) {
-            String response = scanner.next().toLowerCase();
+            String response;
 
-            System.out.println();
+            do {
+                System.out.print("Are you sure? (y/n) -> ");
+                response = scanner.next().toLowerCase();
+
+                UserNotification.notifyUser("");
+            } while (isInvalidConfirmation(response));
 
             switch (response) {
                 case "y", "yes" -> {
-
                     if (!excludeSave) {
+
                         try {
                             IOTasks.deleteFile(FilePaths.SAVE_FILE);
 
-                            tellUser("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
+                            UserNotification.notifyUser("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
 
-                        } catch (IOException ex) {
-                            if (ex instanceof NoSuchFileException e) {
+                        } catch (IOException e) {
+                            if (e instanceof NoSuchFileException nsfe) {
 
-                                tellUserOfErrors("Cannot delete save file '{}' because it doesn't exist", e.getFile());
+                                UserNotification.notifyUserOfError("Cannot delete save file '{}' because it doesn't exist", nsfe.getFile());
                             } else {
 
-                                tellUserOfErrors("Unable to delete save file");
+                                UserNotification.notifyUserOfError("Unable to delete save file");
                             }
                         }
                     }
@@ -73,25 +78,25 @@ public final class PurgeCommand extends CommandAction {
                         try {
                             IOTasks.deleteFile(FilePaths.LOG_FILE);
 
-                            tellUser("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
+                            UserNotification.notifyUser("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
 
                         } catch (IOException ex) {
                             if (ex instanceof NoSuchFileException e) {
 
-                                tellUserOfErrors("Cannot delete log file '{}' because it doesn't exist", e.getFile());
+                                UserNotification.notifyUserOfError("Cannot delete log file '{}' because it doesn't exist", e.getFile());
                             } else {
 
-                                tellUserOfErrors("Unable to delete log file");
+                                UserNotification.notifyUserOfError("Unable to delete log file '{}'", FilePaths.LOG_FILE);
                             }
                         }
                     }
 
                 }
-                case "n", "no" -> LOGGER.info("Purge cancelled");
-
-                default -> LOGGER.info("I wanted a yes or no but anyways");
+                case "n", "no" -> UserNotification.notifyUser("Purge cancelled");
             }
         }
+
+        return ExitCode.OK;
     }
 
 }

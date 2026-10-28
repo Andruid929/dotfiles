@@ -15,8 +15,16 @@ public final class UserNotification {
         logger.info(message);
     }
 
+    public static void notifyUser(String placeholder, Object... args) {
+        logger.info(placeholder, args);
+    }
+
     public static void notifyUserOfError(String errorMessage) {
         logger.error(errorMessage);
+    }
+
+    public static void notifyUserOfError(String placeholder, Object... args) {
+        logger.error(placeholder, args);
     }
 
 }

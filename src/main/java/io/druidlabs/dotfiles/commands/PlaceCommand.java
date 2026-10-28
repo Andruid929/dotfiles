@@ -4,14 +4,17 @@ import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolat
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Scanner;
 
 import io.druidlabs.dotfiles.Worker;
-import io.druidlabs.dotfiles.io.PathWriter;
+import io.druidlabs.dotfiles.util.ExceptionUtil;
+import io.druidlabs.dotfiles.util.UserNotification;
 import io.github.andruid929.leutils.wora.PathFinder;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -32,11 +35,11 @@ public final class PlaceCommand extends CommandAction {
     boolean createMissingDir = false;
 
     @Override
-    public void run() {
+    public Integer call() {
         if (targetKey == null || targetKey.isBlank()) {
-            LOGGER.error("I cannot identify file to place without its key");
+            UserNotification.notifyUserOfError("I cannot identify file to place without its key");
 
-            return;
+            return ExitCode.USAGE;
         }
 
         String key = sanitise(targetKey, false);
@@ -44,9 +47,9 @@ public final class PlaceCommand extends CommandAction {
         var dotfile = Worker.getDotfile(key);
 
         if (dotfile == null) {
-            LOGGER.info("File with key '{}' not found", key);
+            UserNotification.notifyUserOfError("File with key '{}' not found", key);
 
-            return;
+            return ExitCode.USAGE;
         }
 
         Path filePath = validateOverridePath(dotfile.getPathToFile());
@@ -65,9 +68,13 @@ public final class PlaceCommand extends CommandAction {
                         filePath.getFileName(), dirs);
             }
 
-            System.out.print(confirmation);
+            String response;
 
-            String response = scanner.next();
+            do {
+                System.out.print(confirmation);
+
+                response = scanner.next();
+            } while (isInvalidConfirmation(response));
 
             switch (response.toLowerCase()) {
                 case "y", "yes" -> {
@@ -79,20 +86,35 @@ public final class PlaceCommand extends CommandAction {
 
                     placeFile(dotfile.getFileContents(), filePath);
                 }
-                case "n", "no" -> {
-                    LOGGER.info("Place operation cancelled");
 
-                    System.out.println(interpolate("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
-                            dotfile.getKey()));
+                case "n", "no" -> {
+                    UserNotification.notifyUser("Place operation cancelled");
+
+                    UserNotification.notifyUser("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
+                            dotfile.getKey());
                 }
-                default -> LOGGER.info("'{}' is not a valid response", response);
             }
 
         } catch (IOException e) {
-            LOGGER.info("Oof tough luck, something bad happened while placing file");
-            LOGGER.debug("Error placing dotfile with key '{}' at '{}'", dotfile.getKey(), filePath);
-            LOGGER.error("Stacktrace:", e);
+
+            if (e instanceof FileSystemException fse) {
+                String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
+
+                UserNotification.notifyUserOfError("Oof tough luck, something bad happened while placing file: {}", reason);
+
+            } else {
+                UserNotification.notifyUserOfError("Oof tough luck, something bad happened while placing file");
+            }
+
+
+            String logMessage = interpolate("Error placing dotfile with key '{}' at '{}'", dotfile.getKey(), filePath);
+
+            LOGGER.error(logMessage, e);
+
+            return ExitCode.SOFTWARE;
         }
+
+        return ExitCode.OK;
     }
 
     private void placeFile(String contents, Path file) throws IOException {
@@ -103,11 +125,13 @@ public final class PlaceCommand extends CommandAction {
             LOGGER.debug("File '{}' already exists, overwriting", file);
         }
 
-        if (PathWriter.writeToFile(file, contents)) {
-            String outputMessage = interpolate("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
+        Files.writeString(file, contents);
 
-            System.out.println(outputMessage);
-        }
+        String outputMessage = interpolate("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
+
+        UserNotification.notifyUser(outputMessage);
+
+        LOGGER.info(outputMessage);
     }
 
     private Path validateOverridePath(Path def) {

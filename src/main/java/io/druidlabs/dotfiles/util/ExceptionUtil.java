@@ -8,6 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.*;
 
+/**
+ * Utility class for turning filesystem-related exceptions into user-facing messages.
+ */
 public final class ExceptionUtil {
 
     private ExceptionUtil() {

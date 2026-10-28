@@ -3,6 +3,10 @@ package io.druidlabs.dotfiles.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Utility class for sending user-facing messages to the console, routed by the "UserNotification" logger
+ * configured in {@code logback.xml} to bypass the file log.
+ */
 public final class UserNotification {
 
     private static final Logger logger = LoggerFactory.getLogger("UserNotification");

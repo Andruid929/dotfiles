@@ -12,6 +12,9 @@ import io.druidlabs.dotfiles.Dotfile;
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.transformer.JsonHandler;
 
+/**
+ * {@link Persistence} implementation that reads and writes the dotfiles as JSON in {@link FilePaths#SAVE_FILE}.
+ */
 public final class JsonPersistence implements Persistence {
 
     public JsonPersistence() {

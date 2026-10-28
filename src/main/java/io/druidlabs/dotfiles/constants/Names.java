@@ -1,5 +1,8 @@
 package io.druidlabs.dotfiles.constants;
 
+/**
+ * Default names used to build the application's folder and file paths.
+ */
 public final class Names {
 
     public static final String APP_NAME = "Dotfiles";

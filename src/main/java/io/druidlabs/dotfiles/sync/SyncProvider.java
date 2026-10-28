@@ -3,6 +3,9 @@ package io.druidlabs.dotfiles.sync;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A remote provider that a {@link RemoteStore} can sync the dotfiles save file with.
+ */
 public enum SyncProvider {
 
     GOOGLE_DRIVE("GDrive", "Google drive");

@@ -21,6 +21,8 @@ public final class FilePaths {
 
     public static final Path LOG_FILE = APP_FOLDER_DIR.resolve(LOG_FILENAME);
 
+    public static final Path CONFIG_FILE = APP_FOLDER_DIR.resolve(CONFIG_FILENAME);
+
     private FilePaths() {
     }
 

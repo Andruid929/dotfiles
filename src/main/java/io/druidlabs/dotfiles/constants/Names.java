@@ -13,6 +13,8 @@ public final class Names {
 
     public static final String LOG_FILENAME = "events.log";
 
+    public static final String CONFIG_FILENAME = ".config";
+
     private Names() {
         //Utility classes cannot be instantiated
     }

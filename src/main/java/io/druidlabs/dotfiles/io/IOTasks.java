@@ -21,8 +21,6 @@ import io.druidlabs.dotfiles.util.LoggerUtil;
  */
 public final class IOTasks {
 
-    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(IOTasks.class);
-
     private IOTasks() {
         //Utility classes cannot be instantiated
     }
@@ -71,6 +69,7 @@ public final class IOTasks {
 
         createFileIfNotExists(SAVE_FILE);
         createFileIfNotExists(LOG_FILE);
+        createFileIfNotExists(CONFIG_FILE);
     }
 
     public static void createSyncAuthFolder(@NotNull Path path) throws IOException {

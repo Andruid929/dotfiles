@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import io.druidlabs.dotfiles.config.Configuration;
 import io.druidlabs.dotfiles.io.IOTasks;
 import io.druidlabs.dotfiles.persistence.JsonPersistence;
 import io.druidlabs.dotfiles.persistence.Persistence;
@@ -33,6 +34,8 @@ public final class Worker {
     private static final Persistence persistence = new JsonPersistence();
 
     private static final Set<Dotfile> loadedDotFilesSet = new HashSet<>();
+
+    private static Configuration configuration;
 
     private Worker() {
     }
@@ -65,6 +68,8 @@ public final class Worker {
      */
     public static void start() {
         Set<Dotfile> savedDotfiles = new HashSet<>();
+
+        configuration = Configuration.createInstance();
 
         try {
             IOTasks.validateAppPaths();
@@ -112,6 +117,8 @@ public final class Worker {
      * Shuts down the worker and ensures all current dotfiles are saved.
      */
     public static void dismiss() {
+        configuration.saveConfigs();
+
         try {
             persistence.save(loadedDotFilesSet);
 
@@ -133,5 +140,9 @@ public final class Worker {
 
     public static Set<Dotfile> getLoadedDotfilesSet() {
         return loadedDotFilesSet;
+    }
+
+    public static Configuration getConfiguration() {
+        return configuration;
     }
 }

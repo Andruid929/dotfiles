@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public enum SyncProvider {
 
-    GOOGLE_DRIVE("GDrive", "Google drive");
+    GOOGLE_DRIVE("GDrive", "Google Drive");
 
     private final String id;
     private final String name;

@@ -76,6 +76,10 @@ public enum ConfigOption {
         };
 
         final static Function<String, String> SYNC_PROVIDER_VALIDATOR = s -> {
+            if (s.trim().equalsIgnoreCase(Configuration.EMPTY_CONFIG_VALUE)) {
+                return Configuration.EMPTY_CONFIG_VALUE;
+            }
+
             SyncProvider provider = SyncProvider.fromString(s);
 
             if (provider == null) {

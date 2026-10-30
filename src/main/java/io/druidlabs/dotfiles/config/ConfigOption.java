@@ -12,7 +12,7 @@ public enum ConfigOption {
     SYNC_PROVIDER("SyncProvider", Configuration.EMPTY_CONFIG_VALUE, "Online storage provider",
             Validators.SYNC_PROVIDER_VALIDATOR),
 
-    HIDE_CONFIG_ERRORS("HideConfigErrors", "true", "Only show config errors in the config command",
+    LOG_CONFIG_ERRORS("LogConfigErrors", "false", "Write config errors to the log file (the config command always shows them)",
             Validators.BOOLEAN_VALIDATOR);
 
     private final String configKey;

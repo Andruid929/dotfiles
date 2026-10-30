@@ -66,7 +66,7 @@ public final class Configuration {
 
     public static void loadDefaults(boolean isFirstRun) {
         setDefaultConfig(ConfigOption.SYNC_PROVIDER);
-        setDefaultConfig(ConfigOption.HIDE_CONFIG_ERRORS);
+        setDefaultConfig(ConfigOption.LOG_CONFIG_ERRORS);
 
         if (!isFirstRun) {
             hasUnsavedChanges = true;

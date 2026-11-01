@@ -37,9 +37,7 @@ public final class RemoveEntryCommand extends CommandAction {
         boolean removed = Worker.removeDotfile(dotfileKey);
 
         if (removed) {
-            UserNotification.notifyUser("Successfully removed file with key '{}'", dotfileKey);
-
-            LOGGER.info("Removed dotfile with key '{}'", dotfileKey);
+            notifyAndLog("Successfully removed file with key '{}'", dotfileKey);
 
         } else {
             UserNotification.notifyUser("No saved file found with key '{}'", dotfileKey);

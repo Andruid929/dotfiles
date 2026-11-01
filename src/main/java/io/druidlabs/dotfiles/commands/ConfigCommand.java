@@ -1,7 +1,5 @@
 package io.druidlabs.dotfiles.commands;
 
-import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,9 +100,7 @@ public final class ConfigCommand extends CommandAction {
                 UserNotification.notifyUser("All configs are already using their defaults");
 
             } else {
-                UserNotification.notifyUser("Reset all configs to their defaults");
-
-                LOGGER.info("Reset all configs to their defaults");
+                notifyAndLog("Reset all configs to their defaults");
             }
 
             warnIfProviderChanged(configuration, previousProvider);
@@ -131,10 +127,7 @@ public final class ConfigCommand extends CommandAction {
 
         configuration.resetToDefault(option);
 
-        String message = interpolate("Set config {} to its default: {}", configKey, defaultValue);
-
-        UserNotification.notifyUser(message);
-        LOGGER.info(message);
+        notifyAndLog("Set config {} to its default: {}", configKey, defaultValue);
 
         warnIfProviderChanged(configuration, previousProvider);
 
@@ -182,10 +175,7 @@ public final class ConfigCommand extends CommandAction {
             return ExitCode.OK;
         }
 
-        String message = interpolate("Set config {} to '{}'", configKey, newValue);
-
-        UserNotification.notifyUser(message);
-        LOGGER.info(message);
+        notifyAndLog("Set config {} to '{}'", configKey, newValue);
 
         warnIfProviderChanged(configuration, previousProvider);
 

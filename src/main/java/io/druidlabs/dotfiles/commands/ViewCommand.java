@@ -17,16 +17,10 @@ import picocli.CommandLine.Parameters;
 public final class ViewCommand extends CommandAction {
 
     @Parameters(index = "0", description = "The key for the file to view")
-    String key = null;
+    String key;
 
     @Override
     public Integer call() {
-        if (key == null) {
-            LOGGER.info("Please specify a key to view");
-
-            return ExitCode.USAGE;
-        }
-
         String k = sanitise(key, false);
 
         var dotfile = Worker.getDotfile(k);

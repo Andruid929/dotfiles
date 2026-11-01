@@ -54,9 +54,7 @@ public final class NewEntryCommand extends CommandAction {
             } catch (IOException e) {
                 String message = ExceptionUtil.describeIOFailure(e, "Failed to read target file because {}", "Failed to read target file");
 
-                UserNotification.notifyUserOfError(message);
-
-                LOGGER.error(message, e);
+                notifyAndLogErrorWithException(message, e);
 
                 return ExitCode.SOFTWARE;
             }
@@ -70,7 +68,7 @@ public final class NewEntryCommand extends CommandAction {
 
             Worker.addDotfile(dotfile);
 
-            LOGGER.info("Successfully added new file with key '{}'", key);
+            notifyAndLog("Successfully added new file with key '{}'", dotfile.getKey());
 
         } catch (BlankValueException e) {
             UserNotification.notifyUserOfError("You left something blank: {}", e.getMessage());

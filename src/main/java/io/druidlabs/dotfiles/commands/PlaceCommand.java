@@ -108,11 +108,7 @@ public final class PlaceCommand extends CommandAction {
 
         Files.writeString(file, contents);
 
-        String outputMessage = interpolate("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
-
-        UserNotification.notifyUser(outputMessage);
-
-        LOGGER.info(outputMessage);
+        notifyAndLog("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
     }
 
     private Path validateOverridePath(Path def) {

@@ -33,9 +33,7 @@ public class LogCommand extends CommandAction {
             } catch (IOException e) {
                 String message = ExceptionUtil.describeIOFailure(e, "Failed to read log file because {}", "Failed to read log file");
 
-                UserNotification.notifyUserOfError(message);
-
-                LOGGER.error(message, e);
+                notifyAndLogErrorWithException(message, e);
 
                 return ExitCode.SOFTWARE;
             }

@@ -1,5 +1,7 @@
 package io.druidlabs.dotfiles.commands;
 
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
+
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -9,6 +11,7 @@ import java.util.Scanner;
 import java.util.concurrent.Callable;
 
 import io.druidlabs.dotfiles.util.PathUtil;
+import io.druidlabs.dotfiles.util.UserNotification;
 
 /**
  * Base class for all dotfiles commands.
@@ -74,4 +77,23 @@ public abstract class CommandAction implements Callable<Integer> {
             }
         }
     }
+
+    protected final void notifyAndLog(String message, Object... args) {
+        UserNotification.notifyUser(message, args);
+        LOGGER.info(message, args);
+    }
+
+    protected final void notifyAndLogError(String errorMessage, Object... args) {
+        UserNotification.notifyUserOfError(errorMessage, args);
+        LOGGER.error(errorMessage, args);
+    }
+
+    protected final void notifyAndLogErrorWithException(String errorMessage, Exception e, Object... args) {
+        UserNotification.notifyUserOfError(errorMessage, args);
+
+        String logMessage = interpolate(errorMessage, args);
+
+        LOGGER.error(logMessage, e);
+    }
+
 }

@@ -58,7 +58,7 @@ public final class UpdateEntryCommand extends CommandAction {
                 if (!k.equalsIgnoreCase(currentKey)) {
                     dotfile.setKey(k);
 
-                    UserNotification.notifyUser("Key '{}' updated to '{}'", currentKey, k);
+                    notifyAndLog("Key '{}' updated to '{}'", currentKey, k);
                 }
             }
 
@@ -75,6 +75,9 @@ public final class UpdateEntryCommand extends CommandAction {
                     try {
                         setContents(dotfile);
 
+                        notifyAndLog("Updated the saved contents of '{}' from '{}'", dotfile.getKey(),
+                                dotfile.getPathToFile());
+
                     } catch (IllegalArgumentException e) {
                         UserNotification.notifyUserOfError("File '{}' is blank, cannot update dotfile", dotfile.getPathToFile());
 
@@ -84,9 +87,7 @@ public final class UpdateEntryCommand extends CommandAction {
                         String message = ExceptionUtil.describeIOFailure(e, "Failed to update contents: {}",
                                 "Failed to update contents, IO error occurred");
 
-                        UserNotification.notifyUserOfError(message);
-
-                        LOGGER.error(message, e);
+                        notifyAndLogErrorWithException(message, e);
 
                         exitCode.set(ExitCode.SOFTWARE);
                     }
@@ -120,7 +121,5 @@ public final class UpdateEntryCommand extends CommandAction {
         }
 
         dotfile.setFileContents(contents);
-
-        LOGGER.info("Content update successful");
     }
 }

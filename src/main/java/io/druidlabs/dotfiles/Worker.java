@@ -30,11 +30,9 @@ import picocli.CommandLine;
 public final class Worker {
 
     private static final Logger logger = LoggerFactory.getLogger(Worker.class);
-
     private static final Persistence persistence = new JsonPersistence();
-
     private static final Set<Dotfile> loadedDotFilesSet = new HashSet<>();
-
+    private static boolean savingEnabled = true;
     private static Configuration configuration;
 
     private Worker() {
@@ -63,7 +61,7 @@ public final class Worker {
     }
 
     /**
-     * Initializes the worker, sets up a shutdown hook for automatic saving,
+     * Initialises the worker, sets up a shutdown hook for automatic saving,
      * and loads dotfiles from storage.
      */
     public static void start() {
@@ -114,9 +112,13 @@ public final class Worker {
     }
 
     /**
-     * Shuts down the worker and ensures all current dotfiles are saved.
+     * Shuts down the worker and ensures all current dotfiles and configs are saved, unless saving was disabled.
      */
     public static void dismiss() {
+        if (!savingEnabled) {
+            return;
+        }
+
         configuration.saveConfigs();
 
         try {
@@ -125,7 +127,7 @@ public final class Worker {
         } catch (IOException e) {
             String message;
 
-            if (e instanceof JsonProcessingException jpe) {
+            if (e instanceof JsonProcessingException) {
                 message = "Failed to process dotfiles for saving";
 
             } else {
@@ -136,6 +138,21 @@ public final class Worker {
 
             logger.error(message, e);
         }
+    }
+
+    public static void clearAllDotfiles() {
+        loadedDotFilesSet.clear();
+    }
+
+    /**
+     * Stops {@link #dismiss()} from saving dotfiles and configs, for when their files have just been deleted.
+     */
+    public static void disableSaving() {
+        savingEnabled = false;
+    }
+
+    public static boolean isSavingEnabled() {
+        return savingEnabled;
     }
 
     public static Set<Dotfile> getLoadedDotfilesSet() {

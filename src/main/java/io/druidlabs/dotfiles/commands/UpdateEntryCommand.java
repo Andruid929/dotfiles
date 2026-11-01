@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Scanner;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import io.druidlabs.dotfiles.Dotfile;
@@ -72,42 +71,28 @@ public final class UpdateEntryCommand extends CommandAction {
             }
 
             if (!doNotRead) {
-                Scanner scanner = new Scanner(System.in);
+                if (confirm("Any changes in the file will overwrite your saved files, are you sure?")) {
+                    try {
+                        setContents(dotfile);
 
-                String response;
+                    } catch (IllegalArgumentException e) {
+                        UserNotification.notifyUserOfError("File '{}' is blank, cannot update dotfile", dotfile.getPathToFile());
 
-                do {
-                    System.out.print("Any changes in the file will overwrite your saved files, are you sure? (y/n): ");
+                        exitCode.set(ExitCode.USAGE);
 
-                    response = scanner.next();
-                } while (isInvalidConfirmation(response));
+                    } catch (IOException e) {
+                        String message = ExceptionUtil.describeIOFailure(e, "Failed to update contents: {}",
+                                "Failed to update contents, IO error occurred");
 
-                scanner.close();
+                        UserNotification.notifyUserOfError(message);
 
-                switch (response.toLowerCase()) {
-                    case "y", "yes" -> {
+                        LOGGER.error(message, e);
 
-                        try {
-                            setContents(dotfile);
-
-                        } catch (IllegalArgumentException e) {
-                            UserNotification.notifyUserOfError("File '{}' is blank, cannot update dotfile");
-
-                            exitCode.set(ExitCode.USAGE);
-
-                        } catch (IOException e) {
-                            String message = ExceptionUtil.describeIOFailure(e, "Failed to update contents: {}",
-                                    "Failed to update contents, IO error occurred");
-
-                            UserNotification.notifyUserOfError(message);
-
-                            LOGGER.error(message, e);
-
-                            exitCode.set(ExitCode.SOFTWARE);
-                        }
-
+                        exitCode.set(ExitCode.SOFTWARE);
                     }
-                    case "n", "no" -> UserNotification.notifyUser("File update cancelled");
+
+                } else {
+                    UserNotification.notifyUser("File update cancelled");
                 }
             }
         });

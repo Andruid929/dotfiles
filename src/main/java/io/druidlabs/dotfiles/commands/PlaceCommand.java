@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Scanner;
 
 import io.druidlabs.dotfiles.Worker;
 import io.druidlabs.dotfiles.util.ExceptionUtil;
@@ -53,46 +52,34 @@ public final class PlaceCommand extends CommandAction {
 
         Path filePath = validateOverridePath(dotfile.getPathToFile());
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            String confirmation;
+        String question;
 
-            if (Files.exists(filePath)) {
-                confirmation = interpolate("File '{}' already exists, this operation will overwrite it. Are you sure? (y/n): ",
-                        filePath);
+        if (Files.exists(filePath)) {
+            question = interpolate("File '{}' already exists, this operation will overwrite it. Are you sure?", filePath);
 
-            } else {
-                Path dirs = filePath.getParent();
+        } else {
+            Path dirs = filePath.getParent();
 
-                confirmation = interpolate("I am about to create {} in '{}', continue? (y/n): ",
-                        filePath.getFileName(), dirs);
+            question = interpolate("I am about to create {} in '{}', continue?", filePath.getFileName(), dirs);
+        }
+
+        if (!confirm(question)) {
+            UserNotification.notifyUser("Place operation cancelled");
+
+            UserNotification.notifyUser("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
+                    dotfile.getKey());
+
+            return ExitCode.OK;
+        }
+
+        try {
+            Path dirs = filePath.getParent();
+
+            if (createMissingDir && dirs != null && Files.notExists(dirs)) {
+                Files.createDirectories(dirs);
             }
 
-            String response;
-
-            do {
-                System.out.print(confirmation);
-
-                response = scanner.next();
-            } while (isInvalidConfirmation(response));
-
-            switch (response.toLowerCase()) {
-                case "y", "yes" -> {
-                    Path dirs = filePath.getParent();
-
-                    if (createMissingDir && dirs != null && Files.notExists(dirs)) {
-                        Files.createDirectories(dirs);
-                    }
-
-                    placeFile(dotfile.getFileContents(), filePath);
-                }
-
-                case "n", "no" -> {
-                    UserNotification.notifyUser("Place operation cancelled");
-
-                    UserNotification.notifyUser("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
-                            dotfile.getKey());
-                }
-            }
+            placeFile(dotfile.getFileContents(), filePath);
 
         } catch (IOException e) {
 

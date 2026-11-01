@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Scanner;
 import java.util.concurrent.Callable;
 
 import io.druidlabs.dotfiles.util.PathUtil;
@@ -14,6 +15,9 @@ import io.druidlabs.dotfiles.util.PathUtil;
  * Provides common utility methods like input sanitisation and logging.
  */
 public abstract class CommandAction implements Callable<Integer> {
+
+    // Shared and never closed, since closing it would also close System.in for any later prompt
+    private static final Scanner INPUT = new Scanner(System.in);
 
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
@@ -38,10 +42,36 @@ public abstract class CommandAction implements Callable<Integer> {
         return PathUtil.expandPath(value.trim());
     }
 
-    protected final boolean isInvalidConfirmation(@NotNull String response) {
-        return switch (response.toLowerCase().trim()) {
-            case "yes", "y", "no", "n" -> false;
-            default -> true;
-        };
+    /**
+     * Asks the user a yes/no question, asking again until they answer y, yes, n or no in any case.
+     * If input ends before a valid answer, such as Ctrl-D or piped input running out, the answer is taken as no.
+     *
+     * @param question the question to ask, without the {@code (y/n)} suffix.
+     * @return {@code true} if the user answered yes.
+     */
+    protected final boolean confirm(@NotNull String question) {
+        while (true) {
+            System.out.print(question + " (y/n): ");
+
+            if (!INPUT.hasNextLine()) {
+                System.out.println();
+
+                return false;
+            }
+
+            switch (INPUT.nextLine().trim().toLowerCase()) {
+                case "y", "yes" -> {
+                    return true;
+                }
+
+                case "n", "no" -> {
+                    return false;
+                }
+
+                default -> {
+                    // Ask again
+                }
+            }
+        }
     }
 }

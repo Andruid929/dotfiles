@@ -1,7 +1,5 @@
 package io.druidlabs.dotfiles.commands;
 
-import java.util.Scanner;
-
 import io.druidlabs.dotfiles.Worker;
 import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine;
@@ -28,38 +26,26 @@ public final class RemoveEntryCommand extends CommandAction {
 
         String dotfileKey = sanitise(key, false);
 
-        String confirmationMessage = "I hope it goes without saying that there's no Ctrl-Z for this operation";
+        UserNotification.notifyUser("I hope it goes without saying that there's no Ctrl-Z for this operation");
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            String response;
-
-            do {
-                UserNotification.notifyUser(confirmationMessage);
-                System.out.print("Are you sure? (y/n) -> ");
-
-                response = scanner.next();
-
-                UserNotification.notifyUser("");
-            } while (isInvalidConfirmation(response));
-
-            switch (response.toLowerCase()) {
-
-                case "yes", "y", "yeah", "si" -> {
-                    boolean removed = Worker.removeDotfile(dotfileKey);
-
-                    if (removed) {
-                        LOGGER.info("Successfully removed file with key '{}'", dotfileKey);
-
-                    } else {
-                        LOGGER.info("No saved file found with key '{}'", dotfileKey);
-                    }
-                }
-
-                case "n", "no", "nope", "nah" -> LOGGER.info("Remove operation cancelled");
-            }
+        if (!confirm("Are you sure?")) {
+            UserNotification.notifyUser("Remove operation cancelled");
 
             return CommandLine.ExitCode.OK;
         }
+
+        boolean removed = Worker.removeDotfile(dotfileKey);
+
+        if (removed) {
+            UserNotification.notifyUser("Successfully removed file with key '{}'", dotfileKey);
+
+            LOGGER.info("Removed dotfile with key '{}'", dotfileKey);
+
+        } else {
+            UserNotification.notifyUser("No saved file found with key '{}'", dotfileKey);
+        }
+
+        return CommandLine.ExitCode.OK;
     }
 
 }

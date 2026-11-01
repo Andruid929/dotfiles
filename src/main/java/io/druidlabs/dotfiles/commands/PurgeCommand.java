@@ -2,7 +2,6 @@ package io.druidlabs.dotfiles.commands;
 
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-import java.util.Scanner;
 
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.io.IOTasks;
@@ -44,55 +43,44 @@ public final class PurgeCommand extends CommandAction {
 
         UserNotification.notifyUser("");
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            String response;
+        if (!confirm("Are you sure?")) {
+            UserNotification.notifyUser("Purge cancelled");
 
-            do {
-                System.out.print("Are you sure? (y/n) -> ");
-                response = scanner.next().toLowerCase();
+            return ExitCode.OK;
+        }
 
-                UserNotification.notifyUser("");
-            } while (isInvalidConfirmation(response));
+        if (!excludeSave) {
 
-            switch (response) {
-                case "y", "yes" -> {
-                    if (!excludeSave) {
+            try {
+                IOTasks.deleteFile(FilePaths.SAVE_FILE);
 
-                        try {
-                            IOTasks.deleteFile(FilePaths.SAVE_FILE);
+                UserNotification.notifyUser("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
 
-                            UserNotification.notifyUser("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
+            } catch (IOException e) {
+                if (e instanceof NoSuchFileException nsfe) {
 
-                        } catch (IOException e) {
-                            if (e instanceof NoSuchFileException nsfe) {
+                    UserNotification.notifyUserOfError("Cannot delete save file '{}' because it doesn't exist", nsfe.getFile());
+                } else {
 
-                                UserNotification.notifyUserOfError("Cannot delete save file '{}' because it doesn't exist", nsfe.getFile());
-                            } else {
-
-                                UserNotification.notifyUserOfError("Unable to delete save file");
-                            }
-                        }
-                    }
-
-                    if (!excludeLog) {
-                        try {
-                            IOTasks.deleteFile(FilePaths.LOG_FILE);
-
-                            UserNotification.notifyUser("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
-
-                        } catch (IOException ex) {
-                            if (ex instanceof NoSuchFileException e) {
-
-                                UserNotification.notifyUserOfError("Cannot delete log file '{}' because it doesn't exist", e.getFile());
-                            } else {
-
-                                UserNotification.notifyUserOfError("Unable to delete log file '{}'", FilePaths.LOG_FILE);
-                            }
-                        }
-                    }
-
+                    UserNotification.notifyUserOfError("Unable to delete save file");
                 }
-                case "n", "no" -> UserNotification.notifyUser("Purge cancelled");
+            }
+        }
+
+        if (!excludeLog) {
+            try {
+                IOTasks.deleteFile(FilePaths.LOG_FILE);
+
+                UserNotification.notifyUser("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
+
+            } catch (IOException ex) {
+                if (ex instanceof NoSuchFileException e) {
+
+                    UserNotification.notifyUserOfError("Cannot delete log file '{}' because it doesn't exist", e.getFile());
+                } else {
+
+                    UserNotification.notifyUserOfError("Unable to delete log file '{}'", FilePaths.LOG_FILE);
+                }
             }
         }
 

@@ -18,6 +18,10 @@ public interface RemoteStore {
 
     SyncProvider getSyncProvider();
 
+    default Path tokensPath() {
+        return secureFilesPath().resolve("tokens");
+    }
+
     default Path secureFilesPath() {
         return FilePaths.SYNC_SECURE_DIR.resolve(getSyncProvider().getId());
     }

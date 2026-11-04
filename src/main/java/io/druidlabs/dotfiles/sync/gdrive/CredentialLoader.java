@@ -4,7 +4,6 @@ import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolat
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
 import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +55,7 @@ public final class CredentialLoader {
             throw new SyncException(message, e);
         }
 
-        JsonFactory factory = GsonFactory.getDefaultInstance();
+        JsonFactory factory = GoogleDriveRemoteStore.GSON_FACTORY;
 
         GoogleClientSecrets secrets;
 

@@ -98,6 +98,12 @@ public final class PlaceCommand extends CommandAction {
         return ExitCode.OK;
     }
 
+    /**
+     * Writes {@code contents} to {@code file}, creating it if needed and overwriting it otherwise.
+     * The file's folder must already exist.
+     *
+     * @throws IOException if the file could not be created or written.
+     */
     private void placeFile(String contents, Path file) throws IOException {
         try {
             Files.createFile(file);
@@ -111,6 +117,13 @@ public final class PlaceCommand extends CommandAction {
         notifyAndLog("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
     }
 
+    /**
+     * Works out where to place the file. Without {@code -p} it is the saved path. A trailing {@code #} places the
+     * saved filename in the given folder, and a bare name with no folder is resolved against the home folder.
+     *
+     * @param def the saved path.
+     * @return the path to place the file at.
+     */
     private Path validateOverridePath(Path def) {
         if (pathOverride == null) {
             return def;

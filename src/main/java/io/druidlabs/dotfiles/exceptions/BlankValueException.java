@@ -5,6 +5,9 @@ package io.druidlabs.dotfiles.exceptions;
  */
 public class BlankValueException extends IllegalArgumentException {
 
+    /**
+     * @param s a message naming the value that was blank.
+     */
     public BlankValueException(String s) {
         super(s);
     }

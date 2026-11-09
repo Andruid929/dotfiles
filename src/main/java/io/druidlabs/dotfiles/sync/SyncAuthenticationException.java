@@ -6,10 +6,17 @@ package io.druidlabs.dotfiles.sync;
  */
 public class SyncAuthenticationException extends SyncException {
 
+    /**
+     * @param s the message to show the user.
+     */
     public SyncAuthenticationException(String s) {
         super(s);
     }
 
+    /**
+     * @param message the message to show the user.
+     * @param cause   the underlying failure, for the log file.
+     */
     public SyncAuthenticationException(String message, Throwable cause) {
         super(message, cause);
     }

@@ -81,6 +81,12 @@ public final class NewEntryCommand extends CommandAction {
         return ExitCode.OK;
     }
 
+    /**
+     * Resolves the {@code -f} value to the file to save.
+     *
+     * @return the expanded path to an existing file.
+     * @throws CommandUsageException if the path is blank, is a folder or does not exist.
+     */
     private @NotNull Path getFilePathToRead() throws CommandUsageException {
         if (filePath.isBlank()) {
             throw new CommandUsageException("Use the '-f' flag to direct me to the file I should read");

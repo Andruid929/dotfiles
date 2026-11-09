@@ -32,6 +32,7 @@ import picocli.CommandLine.Command;
 )
 public class Main implements Runnable {
 
+    // Must run before any logger is created, since logback.xml reads these properties when it starts
     static {
         final var LOG_FILE_PATH_STRING = FilePaths.LOG_FILE.toString();
 
@@ -72,6 +73,9 @@ public class Main implements Runnable {
         System.exit(exitCode);
     }
 
+    /**
+     * Runs when {@code dotfiles} is called without a subcommand, pointing the user to the help.
+     */
     @Override
     public void run() {
         System.out.println("Missing action, run with -h to see help");

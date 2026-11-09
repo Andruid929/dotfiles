@@ -30,14 +30,35 @@ import picocli.CommandLine;
 public final class Worker {
 
     private static final Logger logger = LoggerFactory.getLogger(Worker.class);
+
+    /**
+     * Where the dotfiles are loaded from by {@link #start()} and saved to by {@link #dismiss()}.
+     */
     private static final Persistence persistence = new JsonPersistence();
+
+    /**
+     * The dotfiles for this run. {@link Dotfile} equality is on the key alone, so this never holds two entries with
+     * the same key.
+     */
     private static final Set<Dotfile> loadedDotFilesSet = new HashSet<>();
+
+    /**
+     * Whether {@link #dismiss()} saves, turned off by {@link #disableSaving()}.
+     */
     private static boolean savingEnabled = true;
+
+    /**
+     * The configs for this run, loaded by {@link #start()}.
+     */
     private static Configuration configuration;
 
     private Worker() {
     }
 
+    /**
+     * @param key the key to look up, matched case-insensitively.
+     * @return the dotfile with that key, or {@code null} if none is saved.
+     */
     public static @Nullable Dotfile getDotfile(@NotNull String key) {
         return loadedDotFilesSet.stream()
                 .filter(dotfile -> dotfile.getKey().equalsIgnoreCase(key))
@@ -45,14 +66,30 @@ public final class Worker {
                 .orElse(null);
     }
 
+    /**
+     * Adds a dotfile to this run's set. If one with the same key is already saved, the set keeps the existing one
+     * and this does nothing.
+     *
+     * @param dotfile the dotfile to add.
+     */
     public static void addDotfile(Dotfile dotfile) {
         loadedDotFilesSet.add(dotfile);
     }
 
+    /**
+     * @param key the key of the dotfile to remove, matched case-insensitively.
+     * @return {@code true} if a dotfile was removed.
+     */
     public static boolean removeDotfile(@NotNull String key) {
         return loadedDotFilesSet.removeIf(dotfile -> dotfile.getKey().equalsIgnoreCase(key));
     }
 
+    /**
+     * Runs {@code operation} on the dotfile with {@code key}, or tells the user no such dotfile is saved.
+     *
+     * @param key       the key of the dotfile to update, matched case-insensitively.
+     * @param operation the changes to make to the dotfile.
+     */
     public static void updateDotfile(@NotNull String key, Consumer<Dotfile> operation) {
         loadedDotFilesSet.stream()
                 .filter(dotfile -> dotfile.getKey().equalsIgnoreCase(key))
@@ -140,6 +177,9 @@ public final class Worker {
         }
     }
 
+    /**
+     * Removes every dotfile from this run's set. The save file is not touched until {@link #dismiss()}.
+     */
     public static void clearAllDotfiles() {
         loadedDotFilesSet.clear();
     }
@@ -151,14 +191,23 @@ public final class Worker {
         savingEnabled = false;
     }
 
+    /**
+     * @return {@code false} once {@link #disableSaving()} has been called.
+     */
     public static boolean isSavingEnabled() {
         return savingEnabled;
     }
 
+    /**
+     * @return the live set of dotfiles for this run. Changes to it are saved by {@link #dismiss()}.
+     */
     public static Set<Dotfile> getLoadedDotfilesSet() {
         return loadedDotFilesSet;
     }
 
+    /**
+     * @return the configs loaded by {@link #start()}, or {@code null} before it has run.
+     */
     public static Configuration getConfiguration() {
         return configuration;
     }

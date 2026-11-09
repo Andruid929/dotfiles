@@ -13,19 +13,39 @@ import io.github.andruid929.leutils.wora.PathFinder;
  */
 public final class FilePaths {
 
+    /**
+     * The app's folder in the user's Documents folder, holding the save, log and config files.
+     */
     public static final Path APP_FOLDER_DIR = PathFinder.getDocumentsFolder().resolve(APP_FOLDER_NAME);
 
+    /**
+     * The folder for sync credentials, with one subfolder per provider. It is in the local app data folder
+     * ({@code AppData\Local} on Windows, so it never roams), outside {@link #APP_FOLDER_DIR} so {@code purge} never
+     * deletes it.
+     */
     public static final Path SYNC_SECURE_DIR = syncDirPath();
 
+    /**
+     * The JSON file holding every saved dotfile.
+     */
     public static final Path SAVE_FILE = APP_FOLDER_DIR.resolve(SAVE_FILENAME);
 
+    /**
+     * The log file, written by logback's file appender.
+     */
     public static final Path LOG_FILE = APP_FOLDER_DIR.resolve(LOG_FILENAME);
 
+    /**
+     * The file holding the user's configs.
+     */
     public static final Path CONFIG_FILE = APP_FOLDER_DIR.resolve(CONFIG_FILENAME);
 
     private FilePaths() {
     }
 
+    /**
+     * @return where {@link #SYNC_SECURE_DIR} lives on this OS.
+     */
     @NotNull
     private static Path syncDirPath() {
         String osName = System.getProperty("os.name");

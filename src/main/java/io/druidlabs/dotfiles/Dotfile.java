@@ -21,12 +21,22 @@ import io.druidlabs.dotfiles.util.PathUtil;
  */
 public final class Dotfile {
 
+    /**
+     * Always lower-case, and the only field used for equality.
+     */
     @NotNull
     private String key;
 
+    /**
+     * The saved text of the file.
+     */
     @NotNull
     private String fileContents;
 
+    /**
+     * The file's folder and name. The constructor shortens the home folder to {@code ~}, and
+     * {@link #getFilePath()} expands it again.
+     */
     @NotNull
     private Path pathToFile;
 
@@ -55,6 +65,9 @@ public final class Dotfile {
         this.pathToFile = Path.of(shortenedPath, filename);
     }
 
+    /**
+     * @throws BlankValueException if {@code key} or {@code fileContents} is blank.
+     */
     private void checkForBlanks(@NotNull String key, String fileContents) {
         if (key.isBlank()) {
             throw new BlankValueException("Key is required");
@@ -73,15 +86,26 @@ public final class Dotfile {
         return Path.of(getFilePath(), getFilename());
     }
 
+    /**
+     * @return the key, always lower-case.
+     */
     @NotNull
     public String getKey() {
         return key;
     }
 
+    /**
+     * Sets the key, lower-casing it. Unlike the constructor, a blank key is not rejected.
+     *
+     * @param key the new key.
+     */
     public void setKey(@NotNull String key) {
         this.key = key.toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * @return the file's name, without its folder.
+     */
     @NotNull
     public String getFilename() {
         Path filename = Objects.requireNonNull(pathToFile.getFileName());
@@ -89,6 +113,12 @@ public final class Dotfile {
         return filename.toString();
     }
 
+    /**
+     * Renames the file, keeping its folder.
+     *
+     * @param filename the new file name, without a folder.
+     * @throws IllegalArgumentException if {@code filename} is blank.
+     */
     public void setFilename(@NotNull String filename) {
         if (filename.isBlank()) {
             throw new IllegalArgumentException("DotFILEs needs at least a FILEname");
@@ -104,15 +134,26 @@ public final class Dotfile {
         }
     }
 
+    /**
+     * @return the saved text of the file.
+     */
     @NotNull
     public String getFileContents() {
         return fileContents;
     }
 
+    /**
+     * Replaces the saved text of the file. Unlike the constructor, blank contents are not rejected.
+     *
+     * @param fileContents the new contents.
+     */
     public void setFileContents(@NotNull String fileContents) {
         this.fileContents = fileContents;
     }
 
+    /**
+     * @return the folder holding the file, with a leading {@code ~} expanded to the home folder.
+     */
     @NotNull
     public String getFilePath() {
         Path filepath = Objects.requireNonNull(pathToFile.getParent());
@@ -120,6 +161,12 @@ public final class Dotfile {
         return PathUtil.expandPath(filepath.toString());
     }
 
+    /**
+     * Moves the file to another folder, keeping its name. The path is stored as given, without shortening the
+     * home folder to {@code ~}.
+     *
+     * @param filePath the new folder, or a blank string for the home folder.
+     */
     public void setFilePath(@NotNull String filePath) {
         Path filename = pathToFile.getFileName();
 

@@ -17,6 +17,9 @@ import io.druidlabs.dotfiles.transformer.JsonHandler;
  */
 public final class JsonPersistence implements Persistence {
 
+    /**
+     * Creates a persistence backed by {@link FilePaths#SAVE_FILE}.
+     */
     public JsonPersistence() {
     }
 

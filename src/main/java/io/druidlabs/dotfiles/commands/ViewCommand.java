@@ -41,6 +41,9 @@ public final class ViewCommand extends CommandAction {
         return ExitCode.OK;
     }
 
+    /**
+     * Formats one row of the header in fixed-width columns: key, then file location.
+     */
     @NotNull
     @Contract(pure = true)
     private String formatData(@NotNull Object arg1, @NotNull Object arg2) {

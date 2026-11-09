@@ -5,6 +5,9 @@ package io.druidlabs.dotfiles.commands;
  */
 public class CommandUsageException extends IllegalArgumentException {
 
+    /**
+     * @param messageForUser the message to show the user, as is.
+     */
     public CommandUsageException(String messageForUser) {
         super(messageForUser);
     }

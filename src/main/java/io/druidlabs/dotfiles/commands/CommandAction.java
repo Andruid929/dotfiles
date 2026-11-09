@@ -22,6 +22,10 @@ public abstract class CommandAction implements Callable<Integer> {
     // Shared and never closed, since closing it would also close System.in for any later prompt
     private static final Scanner INPUT = new Scanner(System.in);
 
+    /**
+     * Logger named after the concrete command class. It writes to the log file only, so use the
+     * {@code notifyAndLog} helpers or {@link UserNotification} for anything the user should see.
+     */
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
 
     /**
@@ -78,16 +82,36 @@ public abstract class CommandAction implements Callable<Integer> {
         }
     }
 
+    /**
+     * Shows a message to the user and writes it to the log file at info level.
+     *
+     * @param message the message, with {@code {}} placeholders for {@code args}.
+     * @param args    the values for the placeholders.
+     */
     protected final void notifyAndLog(String message, Object... args) {
         UserNotification.notifyUser(message, args);
         LOGGER.info(message, args);
     }
 
+    /**
+     * Shows an error to the user on stderr and writes it to the log file at error level.
+     *
+     * @param errorMessage the message, with {@code {}} placeholders for {@code args}.
+     * @param args         the values for the placeholders.
+     */
     protected final void notifyAndLogError(String errorMessage, Object... args) {
         UserNotification.notifyUserOfError(errorMessage, args);
         LOGGER.error(errorMessage, args);
     }
 
+    /**
+     * Shows an error to the user on stderr and writes it to the log file with the exception's stack trace,
+     * which the user never sees.
+     *
+     * @param errorMessage the message, with {@code {}} placeholders for {@code args}.
+     * @param e            the exception to log.
+     * @param args         the values for the placeholders.
+     */
     protected final void notifyAndLogErrorWithException(String errorMessage, Exception e, Object... args) {
         UserNotification.notifyUserOfError(errorMessage, args);
 

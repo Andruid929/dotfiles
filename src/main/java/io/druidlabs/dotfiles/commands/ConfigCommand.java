@@ -56,6 +56,9 @@ public final class ConfigCommand extends CommandAction {
         return handleSet(configuration, action.set);
     }
 
+    /**
+     * Shows any problems found while loading the config file, before the command's own output.
+     */
     private void reportConfigMessages(@NotNull Configuration configuration) {
         List<String> messages = configuration.getConfigMessages();
 
@@ -72,6 +75,9 @@ public final class ConfigCommand extends CommandAction {
         UserNotification.notifyUser("");
     }
 
+    /**
+     * Prints every config with its current value and description.
+     */
     private void listConfigs(@NotNull Configuration configuration) {
         UserNotification.notifyUser("Dotfiles configs");
         UserNotification.notifyUser("");
@@ -82,6 +88,13 @@ public final class ConfigCommand extends CommandAction {
         }
     }
 
+    /**
+     * Resets the config named by {@code resetKey}, or every config for {@code all}, then warns if that changed the
+     * sync provider.
+     *
+     * @param resetKey the config key or {@code all}, already trimmed.
+     * @return {@link ExitCode#USAGE} for a blank or unknown key, otherwise {@link ExitCode#OK}.
+     */
     private int handleReset(@NotNull Configuration configuration, @NotNull String resetKey) {
         if (resetKey.isBlank()) {
             UserNotification.notifyUserOfError("--reset needs a config key, or 'all' to reset everything");
@@ -134,6 +147,14 @@ public final class ConfigCommand extends CommandAction {
         return ExitCode.OK;
     }
 
+    /**
+     * Sets a config from a {@code key:value} pair, then warns if that changed the sync provider. Only the first
+     * colon splits the pair, so the value may contain colons.
+     *
+     * @param keyValue the pair as typed.
+     * @return {@link ExitCode#USAGE} for a malformed pair, an unknown key or an invalid value, otherwise
+     * {@link ExitCode#OK}.
+     */
     private int handleSet(@NotNull Configuration configuration, @NotNull String keyValue) {
         String[] keyAndValue = keyValue.split(":", 2);
 
@@ -182,6 +203,9 @@ public final class ConfigCommand extends CommandAction {
         return ExitCode.OK;
     }
 
+    /**
+     * Tells the user {@code key} is not a config and lists the supported ones.
+     */
     private void reportUnknownConfig(@NotNull String key) {
         String supportedKeys = Arrays.stream(ConfigOption.values())
                 .map(ConfigOption::getConfigKey)
@@ -211,6 +235,10 @@ public final class ConfigCommand extends CommandAction {
                 oldProvider.getName());
     }
 
+    /**
+     * The mutually exclusive {@code --reset} and {@code --set} options. picocli leaves this {@code null} when
+     * neither is given.
+     */
     static final class Action {
 
         @Option(names = {"-r", "--reset"}, paramLabel = "<key|all>",

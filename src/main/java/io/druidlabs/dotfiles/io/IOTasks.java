@@ -25,6 +25,13 @@ public final class IOTasks {
         //Utility classes cannot be instantiated
     }
 
+    /**
+     * Deletes a file. For the log file, logback's file appender is detached first so the file is not held open.
+     *
+     * @param filePath the file to delete.
+     * @throws NoSuchFileException if the file does not exist.
+     * @throws IOException         if the file could not be deleted.
+     */
     public static void deleteFile(@NotNull Path filePath) throws IOException {
         if (Files.notExists(filePath)) {
             throw new NoSuchFileException(filePath.toString());
@@ -37,6 +44,14 @@ public final class IOTasks {
         Files.delete(filePath);
     }
 
+    /**
+     * Deletes a folder and everything in it, deepest first. For the app folder, logback's file appender is detached
+     * first so the log file is not held open. If a deletion fails, whatever was already deleted stays deleted.
+     *
+     * @param folderPath the folder to delete.
+     * @throws NoSuchFileException if the folder does not exist.
+     * @throws IOException         if anything in it could not be deleted.
+     */
     public static void deleteFolder(@NotNull Path folderPath) throws IOException {
         if (Files.notExists(folderPath)) {
             throw new NoSuchFileException(folderPath.toString());
@@ -55,6 +70,9 @@ public final class IOTasks {
         }
     }
 
+    /**
+     * Creates an empty file unless it already exists. The folder must already exist.
+     */
     private static void createFileIfNotExists(Path path) throws IOException {
         if (Files.notExists(path)) {
 
@@ -62,6 +80,12 @@ public final class IOTasks {
         }
     }
 
+    /**
+     * Creates the app folder and its save, log and config files if any are missing. The sync folder is left out on
+     * purpose, so a sync problem can never stop ordinary commands.
+     *
+     * @throws IOException if anything could not be created.
+     */
     public static void validateAppPaths() throws IOException {
         if (Files.notExists(APP_FOLDER_DIR)) {
             Files.createDirectories(APP_FOLDER_DIR);
@@ -72,6 +96,13 @@ public final class IOTasks {
         createFileIfNotExists(CONFIG_FILE);
     }
 
+    /**
+     * Creates a folder for sync credentials if needed, then restricts it to the current user. Only the folder
+     * itself is restricted, any parent folders created along the way get the default permissions.
+     *
+     * @param path the folder to create.
+     * @throws IOException if the folder could not be created or restricted.
+     */
     public static void createSyncAuthFolder(@NotNull Path path) throws IOException {
         if (Files.exists(path)) {
             restrictFolderToOwner(path);
@@ -84,6 +115,16 @@ public final class IOTasks {
         restrictFolderToOwner(path);
     }
 
+    /**
+     * Restricts a folder to the current user. On file systems with POSIX permissions it is set to
+     * {@code rwx------}. Otherwise, as on Windows, its ACL is replaced with a single full-control entry for the
+     * current user that everything inside inherits.
+     *
+     * @param path the folder to restrict.
+     * @throws NoSuchFileException if the folder does not exist.
+     * @throws IOException         if the permissions could not be set, or the file system supports neither POSIX
+     *                             permissions nor ACLs.
+     */
     public static void restrictFolderToOwner(@NotNull Path path) throws IOException {
         if (Files.notExists(path)) {
             throw new NoSuchFileException("Cannot set permissions for a non-existent folder");

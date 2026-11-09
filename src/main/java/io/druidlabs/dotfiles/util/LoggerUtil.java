@@ -16,6 +16,10 @@ public final class LoggerUtil {
         //Utility classes cannot be instantiated
     }
 
+    /**
+     * Stops and removes the root logger's file appender, closing the log file so it can be deleted. Anything
+     * logged afterwards is not written to the file. Does nothing if the appender is already detached.
+     */
     public static void detachFileAppender() {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 

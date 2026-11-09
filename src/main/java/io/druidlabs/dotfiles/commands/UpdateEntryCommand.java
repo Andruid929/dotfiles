@@ -101,6 +101,10 @@ public final class UpdateEntryCommand extends CommandAction {
         return exitCode.get();
     }
 
+    /**
+     * Splits {@code newPath} into folder and filename and sets both on {@code dotfile}. A bare filename moves the
+     * file to the home folder.
+     */
     private void setPathAndFilename(@NotNull String newPath, @NotNull Dotfile dotfile) {
         String[] pathParts = PathUtil.getPathAndFile(Path.of(newPath));
 
@@ -111,6 +115,12 @@ public final class UpdateEntryCommand extends CommandAction {
         dotfile.setFilename(filename);
     }
 
+    /**
+     * Re-reads the dotfile's file from disk into its saved contents.
+     *
+     * @throws IOException              if the file could not be read.
+     * @throws IllegalArgumentException if the file is blank.
+     */
     private void setContents(@NotNull Dotfile dotfile) throws IOException, IllegalArgumentException {
         Path path = dotfile.getPathToFile();
 

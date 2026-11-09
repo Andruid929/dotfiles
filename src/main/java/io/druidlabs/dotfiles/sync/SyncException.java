@@ -5,10 +5,17 @@ package io.druidlabs.dotfiles.sync;
  */
 public class SyncException extends Exception {
 
+    /**
+     * @param message the message to show the user.
+     */
     public SyncException(String message) {
         super(message);
     }
 
+    /**
+     * @param message the message to show the user.
+     * @param cause   the underlying failure, for the log file.
+     */
     public SyncException(String message, Throwable cause) {
         super(message, cause);
     }

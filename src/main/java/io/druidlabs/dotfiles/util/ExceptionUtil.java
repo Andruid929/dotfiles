@@ -17,6 +17,10 @@ public final class ExceptionUtil {
         //Utility classes cannot be instantiated
     }
 
+    /**
+     * @param e the exception to describe.
+     * @return a short, capitalised reason for {@code e}, for user-facing messages.
+     */
     @Contract(pure = true)
     public static @NotNull String getFileSystemExceptionReason(@NotNull FileSystemException e) {
         return switch (e) {

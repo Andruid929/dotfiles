@@ -21,6 +21,9 @@ import io.druidlabs.dotfiles.util.ExceptionUtil;
  */
 public final class CredentialLoader {
 
+    /**
+     * The name the user's client credentials file must have.
+     */
     public static final String CREDENTIALS_FILENAME = "credentials.json";
 
     private CredentialLoader() {

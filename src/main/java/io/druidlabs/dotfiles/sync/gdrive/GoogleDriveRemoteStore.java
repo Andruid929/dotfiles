@@ -49,21 +49,53 @@ import io.druidlabs.dotfiles.util.UserNotification;
  */
 public final class GoogleDriveRemoteStore implements RemoteStore {
 
+    /**
+     * The JSON factory shared by every Google client call in this package, including {@link CredentialLoader}.
+     */
     public static final JsonFactory GSON_FACTORY = GsonFactory.getDefaultInstance();
 
+    /**
+     * Only {@code drive.file}, so the app can only see files it created.
+     */
     private static final List<String> SCOPES = Collections.singletonList(DriveScopes.DRIVE_FILE);
 
+    /**
+     * The key the credential is stored under in {@link #tokensPath()}. There is only ever one account per
+     * machine, so it is fixed.
+     */
     private static final String USER_ID = "user";
 
+    /**
+     * Used for the OAuth flow and the revoke request alike, so every network failure surfaces as the same
+     * exceptions.
+     */
     private final NetHttpTransport httpTransport = new NetHttpTransport();
 
+    /**
+     * Errors from methods that can't throw, returned by {@link #drainUnloggedErrors()}.
+     */
     private final List<String> unloggedErrors = new ArrayList<>();
 
+    /**
+     * Built by the first {@link #login()} and reused after that.
+     */
     private GoogleAuthorizationCodeFlow authFlow;
 
+    /**
+     * Creates a store. Nothing is read from disk or the network until a method needs it.
+     */
     public GoogleDriveRemoteStore() {
     }
 
+    /**
+     * Builds the OAuth flow from the user's client credentials, storing tokens in {@link #tokensPath()} and asking
+     * for offline access so Google returns a refresh token. Opening the token store creates {@code tokens/} if it
+     * is missing.
+     *
+     * @return the flow, ready to authorise.
+     * @throws SyncException if {@code credentials.json} is missing or invalid.
+     * @throws IOException   if the token store could not be opened.
+     */
     private GoogleAuthorizationCodeFlow getAuthCodeFlow() throws IOException, SyncException {
         GoogleClientSecrets secrets = CredentialLoader.load(secureFilesPath());
 
@@ -75,6 +107,12 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
                 .build();
     }
 
+    /**
+     * Reads the stored credential straight from {@link #tokensPath()}, so it works without {@code credentials.json}.
+     *
+     * @return the stored credential, or {@code null} if {@code tokens/} does not exist or holds none.
+     * @throws IOException if the token store could not be read.
+     */
     private @Nullable StoredCredential loadStoredCredential() throws IOException {
         if (Files.notExists(tokensPath())) {
             return null;

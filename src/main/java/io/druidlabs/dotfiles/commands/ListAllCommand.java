@@ -46,6 +46,9 @@ public final class ListAllCommand extends CommandAction {
         return ExitCode.OK;
     }
 
+    /**
+     * Formats one row of the list in fixed-width columns: number, key, then file path.
+     */
     @NotNull
     @Contract(pure = true)
     private String formatOutput(String arg1, String arg2, String arg3) {

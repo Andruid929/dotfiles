@@ -119,6 +119,12 @@ public final class PurgeCommand extends CommandAction {
         return ExitCode.OK;
     }
 
+    /**
+     * Deletes the whole {@link FilePaths#APP_FOLDER_DIR} and stops anything being saved on exit.
+     * {@link FilePaths#SYNC_SECURE_DIR} is outside it and is never touched.
+     *
+     * @return {@link ExitCode#SOFTWARE} if anything could not be deleted, otherwise {@link ExitCode#OK}.
+     */
     private int purgeEverything() {
         Path appFolder = FilePaths.APP_FOLDER_DIR;
 

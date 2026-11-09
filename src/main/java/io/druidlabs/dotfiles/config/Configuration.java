@@ -19,18 +19,44 @@ import io.druidlabs.dotfiles.util.ExceptionUtil;
 import io.druidlabs.dotfiles.util.UserNotification;
 import io.github.andruid929.leutils.config.Config;
 
+/**
+ * The app's configs, loaded from {@link FilePaths#CONFIG_FILE} on top of each option's default.
+ * Values live in le-utils' static {@link Config} store, so only one instance is meant to exist per run, created by
+ * {@link io.druidlabs.dotfiles.Worker#start()}.
+ */
 public final class Configuration {
 
+    /**
+     * The value for a config that is deliberately unset, such as having no sync provider.
+     */
     public static final String EMPTY_CONFIG_VALUE = "none";
 
     private static final Logger logger = LoggerFactory.getLogger(Configuration.class);
 
+    /**
+     * Whether {@link #saveConfigs()} has anything to write. Static, like the {@link Config} store it tracks.
+     */
     private static boolean hasUnsavedChanges = false;
 
+    /**
+     * Problems found while loading the config file, in the order they were found.
+     */
     private final List<String> configMessages = new ArrayList<>();
 
+    /**
+     * Set when the config file exists but could not be read, so saving can't replace it with defaults.
+     */
     private final boolean savingBlocked;
 
+    /**
+     * Loads the defaults, then every valid config from {@code savedConfigs}. Unknown keys are ignored, and invalid
+     * values keep their default and are recorded as config messages. If there are any messages, the file is not
+     * rewritten unless a later change asks for it.
+     *
+     * @param savedConfigs   the configs read from the file, or {@code null} to use the defaults only.
+     * @param savingBlocked  whether the config file exists but could not be read.
+     * @param configMessages problems already found while reading the file.
+     */
     private Configuration(@Nullable Config savedConfigs, boolean savingBlocked, String @NotNull ... configMessages) {
         this.savingBlocked = savingBlocked;
 
@@ -84,6 +110,12 @@ public final class Configuration {
         return ConfigOption.fromInput(configKey) != null;
     }
 
+    /**
+     * Loads the config file, or the defaults only if it doesn't exist. If it exists but could not be read, the
+     * defaults are used and saving is blocked so the file is never overwritten.
+     *
+     * @return the loaded configs.
+     */
     @Contract(" -> new")
     public static @NotNull Configuration createInstance() {
         if (Files.notExists(FilePaths.CONFIG_FILE)) {
@@ -108,15 +140,28 @@ public final class Configuration {
         return new Configuration(config, false);
     }
 
+    /**
+     * Puts every option's default value into the {@link Config} store.
+     */
     private void loadDefaults() {
         setDefaultConfig(ConfigOption.SYNC_PROVIDER);
         setDefaultConfig(ConfigOption.LOG_CONFIG_ERRORS);
     }
 
+    /**
+     * Puts {@code option}'s default value into the {@link Config} store.
+     */
     private void setDefaultConfig(@NotNull ConfigOption option) {
         Config.add(option.getConfigKey(), option.getDefaultValue());
     }
 
+    /**
+     * Sets a config after normalising its value, marking it for saving if the value changed.
+     *
+     * @param key   the config to set.
+     * @param value the new value as typed.
+     * @throws InvalidConfigException if {@code value} is not valid for the config, or is blank.
+     */
     public void setConfig(@NotNull ConfigOption key, String value) throws InvalidConfigException {
         String normalised = normaliseValue(key, value);
 
@@ -131,6 +176,12 @@ public final class Configuration {
         }
     }
 
+    /**
+     * Loads a value read from the config file. If normalising changed it, the file is marked for saving so it is
+     * rewritten in canonical form.
+     *
+     * @throws InvalidConfigException if {@code value} is not valid for the config, or is blank.
+     */
     private void loadConfig(@NotNull ConfigOption key, String value) throws InvalidConfigException {
         String normalised = normaliseValue(key, value);
 
@@ -143,6 +194,10 @@ public final class Configuration {
         Config.add(configKey, normalised);
     }
 
+    /**
+     * @return {@code value} in canonical form.
+     * @throws InvalidConfigException if {@code value} is not valid for the config, or is blank.
+     */
     private @NotNull String normaliseValue(@NotNull ConfigOption key, String value) throws InvalidConfigException {
         String normalised = key.normalise(value);
 
@@ -181,6 +236,10 @@ public final class Configuration {
         }
     }
 
+    /**
+     * @param option the config to read.
+     * @return the config's current value, which is its default unless it was set or loaded from the file.
+     */
     public @Nullable String getConfig(@NotNull ConfigOption option) {
         String key = option.getConfigKey();
 
@@ -194,6 +253,10 @@ public final class Configuration {
         return Map.copyOf(Config.getLoadedConfigs());
     }
 
+    /**
+     * Writes the configs to {@link FilePaths#CONFIG_FILE} if anything changed. When saving is blocked, the user is
+     * told instead. Failures are reported to the user rather than thrown.
+     */
     public void saveConfigs() {
         if (!hasUnsavedChanges) {
             return;
@@ -226,6 +289,9 @@ public final class Configuration {
         return savingBlocked;
     }
 
+    /**
+     * @return the problems found while loading the config file, in the order they were found.
+     */
     @Contract(pure = true)
     public @NotNull @Unmodifiable List<String> getConfigMessages() {
         return List.copyOf(configMessages);

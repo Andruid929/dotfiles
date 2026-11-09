@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 
 import io.druidlabs.dotfiles.util.PathUtil;
 import io.druidlabs.dotfiles.util.UserNotification;
+import picocli.CommandLine.Option;
 
 /**
  * Base class for all dotfiles commands.
@@ -27,6 +28,9 @@ public abstract class CommandAction implements Callable<Integer> {
      * {@code notifyAndLog} helpers or {@link UserNotification} for anything the user should see.
      */
     protected final Logger LOGGER = LoggerFactory.getLogger(this.getClass());
+
+    @Option(names = {"-h", "--help"}, description = "Show this help message and exit", usageHelp = true)
+    boolean help = false;
 
     /**
      * Sanitizes a string value.

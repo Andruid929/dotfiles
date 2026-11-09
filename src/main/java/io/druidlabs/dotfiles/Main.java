@@ -5,9 +5,11 @@ import org.slf4j.LoggerFactory;
 
 import io.druidlabs.dotfiles.commands.*;
 import io.druidlabs.dotfiles.constants.FilePaths;
+import io.druidlabs.dotfiles.util.ManifestVersionProvider;
 import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 /**
  * The main entry point for the Dotfiles application.
@@ -16,7 +18,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "dotfiles",
         description = "Save and restore config files",
-        version = "Dotfiles 1.0",
+        versionProvider = ManifestVersionProvider.class,
         subcommands = {
                 NewEntryCommand.class,
                 PurgeCommand.class,
@@ -27,8 +29,7 @@ import picocli.CommandLine.Command;
                 PlaceCommand.class,
                 LogCommand.class,
                 ConfigCommand.class
-        },
-        mixinStandardHelpOptions = true
+        }
 )
 public class Main implements Runnable {
 
@@ -43,6 +44,12 @@ public class Main implements Runnable {
         System.setProperty("LOG_PATTERN", LOG_PATTERN);
         System.setProperty("CONSOLE_LOG_PATTERN", CONSOLE_LOG_PATTERN);
     }
+
+    @Option(names = {"-V", "-v", "--version"}, description = "Show Dotfiles app version", versionHelp = true)
+    boolean version = false;
+
+    @Option(names = {"-h", "--help"}, description = "Show this help message and exit", usageHelp = true)
+    boolean help = false;
 
     /**
      * Entry point of the application.

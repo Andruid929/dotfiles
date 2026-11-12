@@ -21,7 +21,7 @@ public final class ViewCommand extends CommandAction {
 
     @Override
     public Integer call() {
-        String k = sanitise(key, false);
+        String k = sanitiseKey(key);
 
         var dotfile = Worker.getDotfile(k);
 

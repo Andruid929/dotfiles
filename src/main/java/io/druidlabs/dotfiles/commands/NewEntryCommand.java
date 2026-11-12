@@ -33,6 +33,21 @@ public final class NewEntryCommand extends CommandAction {
 
     @Override
     public Integer call() {
+        String sanitisedKey = sanitiseKey(key);
+
+        if (sanitisedKey.isBlank()) {
+            UserNotification.notifyUser("Key cannot be blank or empty");
+
+            return ExitCode.USAGE;
+        }
+
+        if (isExistingKey(sanitisedKey)) {
+            UserNotification.notifyUser("Dotfile with key '{}' already exists", sanitisedKey);
+            UserNotification.notifyUser("Use 'dotfiles update {}' to update that dotfile instead", sanitisedKey);
+
+            return ExitCode.USAGE;
+        }
+
         try {
 
             Path fileToRead;
@@ -64,7 +79,7 @@ public final class NewEntryCommand extends CommandAction {
             String fileLocation = fileAndPath[0];
             String filename = fileAndPath[1];
 
-            Dotfile dotfile = new Dotfile(sanitise(key, false), content, fileLocation, filename);
+            Dotfile dotfile = new Dotfile(sanitisedKey, content, fileLocation, filename);
 
             Worker.addDotfile(dotfile);
 
@@ -92,7 +107,7 @@ public final class NewEntryCommand extends CommandAction {
             throw new CommandUsageException("Use the '-f' flag to direct me to the file I should read");
         }
 
-        String expandedPath = PathUtil.expandPath(sanitise(filePath, true));
+        String expandedPath = sanitise(filePath);
 
         Path pathToFile = Path.of(expandedPath);
 
@@ -110,5 +125,9 @@ public final class NewEntryCommand extends CommandAction {
         String message = interpolate("I cannot find the file '{}', you sure it exists?", pathToFile);
 
         throw new CommandUsageException(message);
+    }
+
+    private boolean isExistingKey(String key) {
+        return Worker.getDotfile(key) != null;
     }
 }

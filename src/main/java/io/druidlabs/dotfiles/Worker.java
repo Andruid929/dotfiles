@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.nio.file.FileSystemException;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Consumer;
 
 import io.druidlabs.dotfiles.config.Configuration;
 import io.druidlabs.dotfiles.io.IOTasks;
@@ -82,19 +81,6 @@ public final class Worker {
      */
     public static boolean removeDotfile(@NotNull String key) {
         return loadedDotFilesSet.removeIf(dotfile -> dotfile.getKey().equalsIgnoreCase(key));
-    }
-
-    /**
-     * Runs {@code operation} on the dotfile with {@code key}, or tells the user no such dotfile is saved.
-     *
-     * @param key       the key of the dotfile to update, matched case-insensitively.
-     * @param operation the changes to make to the dotfile.
-     */
-    public static void updateDotfile(@NotNull String key, Consumer<Dotfile> operation) {
-        loadedDotFilesSet.stream()
-                .filter(dotfile -> dotfile.getKey().equalsIgnoreCase(key))
-                .findFirst()
-                .ifPresentOrElse(operation, () -> UserNotification.notifyUser("File with key '{}' not found", key));
     }
 
     /**

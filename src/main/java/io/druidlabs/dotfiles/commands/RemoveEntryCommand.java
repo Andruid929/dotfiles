@@ -24,7 +24,7 @@ public final class RemoveEntryCommand extends CommandAction {
             return CommandLine.ExitCode.OK;
         }
 
-        String dotfileKey = sanitise(key, false);
+        String dotfileKey = sanitiseKey(key);
 
         UserNotification.notifyUser("I hope it goes without saying that there's no Ctrl-Z for this operation");
 

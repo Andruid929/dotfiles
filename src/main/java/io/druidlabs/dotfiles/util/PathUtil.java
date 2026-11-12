@@ -31,7 +31,7 @@ public final class PathUtil {
      * @throws IllegalArgumentException if {@code path} has no filename, such as a root.
      */
     @Contract("_ -> new")
-    public static String @NotNull [] getPathAndFile(@NotNull Path path) {
+    public static String @NotNull [] getPathAndFile(@NotNull Path path) throws IllegalArgumentException {
         Path filepath = path.getParent();
         Path filename = path.getFileName();
 
@@ -50,19 +50,19 @@ public final class PathUtil {
      * Replaces a leading home folder with {@code ~}, using {@code /} for the rest of the path.
      *
      * @param pathString the path to shorten.
-     * @return the shortened path, {@code ~} for a blank path, or {@code pathString} unchanged if it is not in the
-     * home folder.
+     * @return the shortened path, {@code ~} for a blank path, or {@code pathString} with {@code /} as its separator
+     * if it is not in the home folder.
      */
     public static @NotNull String shortenPath(@NotNull String pathString) {
         if (pathString.isBlank()) {
             return "~";
         }
 
-        if (!pathString.startsWith(DEFAULT_DIR)) {
-            return pathString;
-        }
-
         Path path = Path.of(pathString).normalize();
+
+        if (!path.startsWith(DEFAULT_DIR)) {
+            return pathString.replace("\\", "/");
+        }
 
         Path relative = Path.of(DEFAULT_DIR).relativize(path);
 
@@ -71,18 +71,18 @@ public final class PathUtil {
     }
 
     /**
-     * Replaces a leading {@code ~/} with the home folder.
+     * Replaces a leading {@code ~/} or {@code ~\} with the home folder, and uses the OS separator throughout.
      *
      * @param pathString the path to expand.
-     * @return the expanded path, the home folder for a blank path or {@code ~} alone, or {@code pathString}
-     * unchanged if it does not start with {@code ~/}.
+     * @return the expanded path, the home folder for a blank path or {@code ~} alone, or {@code pathString} with
+     * the OS separator if it does not start with {@code ~/} or {@code ~\}.
      */
     public static @NotNull String expandPath(@NotNull String pathString) {
         if (pathString.isBlank() || pathString.equals("~")) {
             return PathFinder.USER_HOME;
         }
 
-        if (pathString.startsWith("~/")) {
+        if (pathString.startsWith("~/") || pathString.startsWith("~\\")) {
             String fromUserHome = pathString.substring(2); //Remove the tilde and first slash
 
             Path expandedPath = PathFinder.createPathFromHomeRoot(fromUserHome).normalize();
@@ -90,7 +90,7 @@ public final class PathUtil {
             return handleSeparators(expandedPath.toString());
         }
 
-        return pathString;
+        return handleSeparators(pathString);
     }
 
     /**

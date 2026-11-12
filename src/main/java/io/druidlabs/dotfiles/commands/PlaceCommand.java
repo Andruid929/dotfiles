@@ -40,7 +40,7 @@ public final class PlaceCommand extends CommandAction {
             return ExitCode.USAGE;
         }
 
-        String key = sanitise(targetKey, false);
+        String key = sanitiseKey(targetKey);
 
         var dotfile = Worker.getDotfile(key);
 
@@ -129,7 +129,7 @@ public final class PlaceCommand extends CommandAction {
             return def;
         }
 
-        String stringPath = sanitise(pathOverride, true);
+        String stringPath = sanitise(pathOverride);
 
         Path fullPath;
 

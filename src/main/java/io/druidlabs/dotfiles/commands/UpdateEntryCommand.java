@@ -1,14 +1,16 @@
 package io.druidlabs.dotfiles.commands;
 
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import io.druidlabs.dotfiles.Dotfile;
 import io.druidlabs.dotfiles.Worker;
+import io.druidlabs.dotfiles.exceptions.BlankValueException;
 import io.druidlabs.dotfiles.util.ExceptionUtil;
 import io.druidlabs.dotfiles.util.PathUtil;
 import io.druidlabs.dotfiles.util.UserNotification;
@@ -38,98 +40,155 @@ public final class UpdateEntryCommand extends CommandAction {
 
     @Override
     public Integer call() {
+
         if (targetKey.isBlank()) {
             UserNotification.notifyUser("Key cannot be blank");
 
             return ExitCode.USAGE;
         }
 
-        String key = sanitise(targetKey, false);
+        if (isNoOp()) {
+            UserNotification.notifyUser("Nothing to do");
 
-        AtomicInteger exitCode = new AtomicInteger();
+            return ExitCode.USAGE;
+        }
 
-        Worker.updateDotfile(key, dotfile -> {
-            String currentKey = dotfile.getKey();
-            String currentPath = dotfile.getFilePath();
+        String key = sanitiseKey(targetKey);
 
-            if (newKey != null) {
-                String k = sanitise(newKey, false);
+        Dotfile dotfile = Worker.getDotfile(key);
 
-                if (!k.equalsIgnoreCase(currentKey)) {
-                    dotfile.setKey(k);
+        if (dotfile == null) {
+            UserNotification.notifyUser("Dotfile with key '{}' not found", key);
 
-                    notifyAndLog("Key '{}' updated to '{}'", currentKey, k);
-                }
+            return ExitCode.USAGE;
+        }
+
+        String k = null;
+        String[] pathParts = null;
+
+        if (newKey != null) {
+            k = sanitiseKey(newKey);
+
+            if (k.isBlank()) {
+                UserNotification.notifyUser("New key cannot be blank");
+
+                return ExitCode.USAGE;
             }
 
-            if (pathString != null) {
-                String newPath = sanitise(pathString, true);
+            if (k.equalsIgnoreCase(key)) {
+                UserNotification.notifyUser("Key already set to '{}'", k);
 
-                if (!newPath.equalsIgnoreCase(currentPath)) {
-                    setPathAndFilename(newPath, dotfile);
-                }
+                k = null;
+
+            } else if (Worker.getDotfile(k) != null) {
+                UserNotification.notifyUser("Dotfile key '{}' already exists", k);
+
+                return ExitCode.USAGE;
+            }
+        }
+
+        if (pathString != null) {
+            try {
+                pathParts = PathUtil.getPathAndFile(Path.of(sanitise(pathString)));
+
+            } catch (IllegalArgumentException e) {
+                UserNotification.notifyUserOfError(e.getMessage());
+
+                return ExitCode.USAGE;
             }
 
-            if (!doNotRead) {
-                if (confirm("Any changes in the file will overwrite your saved files, are you sure?")) {
-                    try {
-                        setContents(dotfile);
+            if (Path.of(pathParts[0], pathParts[1]).equals(dotfile.getPathToFile())) {
+                UserNotification.notifyUser("Path already set to '{}'", dotfile.getPathToFile());
 
-                        notifyAndLog("Updated the saved contents of '{}' from '{}'", dotfile.getKey(),
-                                dotfile.getPathToFile());
-
-                    } catch (IllegalArgumentException e) {
-                        UserNotification.notifyUserOfError("File '{}' is blank, cannot update dotfile", dotfile.getPathToFile());
-
-                        exitCode.set(ExitCode.USAGE);
-
-                    } catch (IOException e) {
-                        String message = ExceptionUtil.describeIOFailure(e, "Failed to update contents: {}",
-                                "Failed to update contents, IO error occurred");
-
-                        notifyAndLogErrorWithException(message, e);
-
-                        exitCode.set(ExitCode.SOFTWARE);
-                    }
-
-                } else {
-                    UserNotification.notifyUser("File update cancelled");
-                }
+                pathParts = null;
             }
-        });
+        }
 
-        return exitCode.get();
+        if (doNotRead && k == null && pathParts == null) {
+            UserNotification.notifyUser("Nothing to change");
+
+            return ExitCode.USAGE;
+        }
+
+        String contents = null;
+
+        if (!doNotRead) {
+            Path fileToRead = pathParts == null ? dotfile.getPathToFile() : Path.of(pathParts[0], pathParts[1]);
+
+            String question = interpolate("Update '{}' and replace its saved contents with '{}'?", key, fileToRead);
+
+            if (confirm(question)) {
+                try {
+                    contents = readContents(fileToRead);
+
+                } catch (BlankValueException e) {
+                    UserNotification.notifyUserOfError("{}, cannot update dotfile", e.getMessage());
+
+                    return ExitCode.USAGE;
+
+                } catch (IOException e) {
+                    String message = ExceptionUtil.describeIOFailure(e, "Failed to update contents: {}",
+                            "Failed to update contents, IO error occurred");
+
+                    notifyAndLogErrorWithException(message, e);
+
+                    return ExitCode.SOFTWARE;
+                }
+
+            } else {
+                UserNotification.notifyUser("Update cancelled, nothing was changed");
+
+                return ExitCode.OK;
+            }
+        }
+
+        //Every change has been checked and the file read by now, so nothing below can leave the dotfile half updated
+
+        if (k != null) {
+            dotfile.setKey(k);
+
+            notifyAndLog("Key '{}' updated to '{}'", key, k);
+        }
+
+        if (pathParts != null) {
+            Path oldPath = dotfile.getPathToFile();
+
+            dotfile.setFilePath(pathParts[0]);
+            dotfile.setFilename(pathParts[1]);
+
+            notifyAndLog("Path of '{}' updated from '{}' to '{}'", dotfile.getKey(), oldPath, dotfile.getPathToFile());
+        }
+
+        if (contents != null) {
+            dotfile.setFileContents(contents);
+
+            notifyAndLog("Updated the saved contents of '{}' from '{}'", dotfile.getKey(), dotfile.getPathToFile());
+        }
+
+        return ExitCode.OK;
     }
 
     /**
-     * Splits {@code newPath} into folder and filename and sets both on {@code dotfile}. A bare filename moves the
-     * file to the home folder.
-     */
-    private void setPathAndFilename(@NotNull String newPath, @NotNull Dotfile dotfile) {
-        String[] pathParts = PathUtil.getPathAndFile(Path.of(newPath));
-
-        String filepath = pathParts[0];
-        String filename = pathParts[1];
-
-        dotfile.setFilePath(filepath);
-        dotfile.setFilename(filename);
-    }
-
-    /**
-     * Re-reads the dotfile's file from disk into its saved contents.
+     * Reads the file a dotfile's contents will be updated from.
      *
-     * @throws IOException              if the file could not be read.
-     * @throws IllegalArgumentException if the file is blank.
+     * @param path the file to read.
+     * @return the file's contents, never blank.
+     * @throws IOException         if the file could not be read.
+     * @throws BlankValueException if the file is blank.
      */
-    private void setContents(@NotNull Dotfile dotfile) throws IOException, IllegalArgumentException {
-        Path path = dotfile.getPathToFile();
-
+    private @NotNull String readContents(@NotNull Path path) throws IOException, BlankValueException {
         String contents = Files.readString(path);
 
         if (contents.isBlank()) {
-            throw new IllegalArgumentException();
+            String message = interpolate("Dotfile at '{}' is empty", path);
+
+            throw new BlankValueException(message);
         }
 
-        dotfile.setFileContents(contents);
+        return contents;
+    }
+
+    private boolean isNoOp() {
+        return doNotRead && newKey == null && pathString == null;
     }
 }

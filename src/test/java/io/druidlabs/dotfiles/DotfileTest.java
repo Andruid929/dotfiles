@@ -35,6 +35,38 @@ class DotfileTest {
     }
 
     @Test
+    void constructor_shouldThrowExceptionIfFilenameIsBlank() {
+        assertThrows(BlankValueException.class, () -> new Dotfile("key", "content", "/path/to", ""));
+        assertThrows(BlankValueException.class, () -> new Dotfile("key", "content", "/path/to", "  "));
+    }
+
+    @Test
+    void constructor_shouldStoreHomePathShortened() {
+        String path = Path.of(PathFinder.USER_HOME, ".config", "nvim").toString();
+
+        Dotfile dotfile = new Dotfile("key", "content", path, "init.lua");
+        assertEquals("~/.config/nvim", dotfile.getShortFilePath());
+        assertEquals(path, dotfile.getFilePath());
+        assertEquals(Path.of(PathFinder.USER_HOME, ".config", "nvim", "init.lua"), dotfile.getPathToFile());
+    }
+
+    @Test
+    void constructor_shouldAcceptBackslashTilde() {
+        Dotfile dotfile = new Dotfile("key", "content", "~\\.config\\nvim", "init.lua");
+        assertEquals("~/.config/nvim", dotfile.getShortFilePath());
+        assertEquals(Path.of(PathFinder.USER_HOME, ".config", "nvim").toString(), dotfile.getFilePath());
+    }
+
+    @Test
+    void setFilePath_shouldStoreHomePathShortened() {
+        Dotfile dotfile = new Dotfile("key", "content", "/old/path", "file.txt");
+
+        dotfile.setFilePath(Path.of(PathFinder.USER_HOME, "dots").toString());
+        assertEquals("~/dots", dotfile.getShortFilePath());
+        assertEquals("file.txt", dotfile.getFilename());
+    }
+
+    @Test
     void setFilePath_shouldUpdatePath() {
         Dotfile dotfile = new Dotfile("key", "content", Path.of("/old/path").toString(), "file.txt");
 
@@ -71,10 +103,26 @@ class DotfileTest {
     }
 
     @Test
+    void setKey_shouldThrowExceptionIfKeyIsBlank() {
+        Dotfile dotfile = new Dotfile("key", "content", "/path", "file.txt");
+        assertThrows(BlankValueException.class, () -> dotfile.setKey(""));
+        assertThrows(BlankValueException.class, () -> dotfile.setKey("  "));
+        assertEquals("key", dotfile.getKey());
+    }
+
+    @Test
     void setFileContents_shouldUpdateContent() {
         Dotfile dotfile = new Dotfile("key", "content1", "/path", "file.txt");
         dotfile.setFileContents("content2");
         assertEquals("content2", dotfile.getFileContents());
+    }
+
+    @Test
+    void setFileContents_shouldThrowExceptionIfContentIsBlank() {
+        Dotfile dotfile = new Dotfile("key", "content", "/path", "file.txt");
+        assertThrows(BlankValueException.class, () -> dotfile.setFileContents(""));
+        assertThrows(BlankValueException.class, () -> dotfile.setFileContents("  "));
+        assertEquals("content", dotfile.getFileContents());
     }
 
     @Test
@@ -101,7 +149,8 @@ class DotfileTest {
     @Test
     void setFilename_shouldThrowExceptionIfFilenameIsBlank() {
         Dotfile dotfile = new Dotfile("key", "content", "/path", "file.txt");
-        assertThrows(IllegalArgumentException.class, () -> dotfile.setFilename(""));
-        assertThrows(IllegalArgumentException.class, () -> dotfile.setFilename("  "));
+        assertThrows(BlankValueException.class, () -> dotfile.setFilename(""));
+        assertThrows(BlankValueException.class, () -> dotfile.setFilename("  "));
+        assertEquals("file.txt", dotfile.getFilename());
     }
 }

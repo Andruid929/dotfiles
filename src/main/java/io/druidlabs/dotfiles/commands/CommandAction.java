@@ -33,24 +33,30 @@ public abstract class CommandAction implements Callable<Integer> {
     boolean help = false;
 
     /**
-     * Sanitizes a string value.
-     * If {@code isPath} is true, it expands the path (e.g., handles ~) and normalizes it.
+     * Trims a path given by the user, expands a leading {@code ~} and normalises it.
      *
-     * @param value  the string to sanitise.
-     * @param isPath whether the value represents a file path.
-     * @return the sanitised string.
+     * @param path the path to sanitise.
+     * @return the sanitised path.
      */
     @NotNull
-    protected final String sanitise(@NotNull String value, boolean isPath) {
-        if (isPath) {
-            String expandedPath = PathUtil.expandPath(value.trim());
+    protected final String sanitise(@NotNull String path) {
+        String expandedPath = PathUtil.expandPath(path.trim());
 
-            Path normalised = Path.of(expandedPath).normalize();
+        Path normalised = Path.of(expandedPath).normalize();
 
-            return normalised.toString();
-        }
+        return normalised.toString();
+    }
 
-        return PathUtil.expandPath(value.trim());
+    /**
+     * Trims a key given by the user and replaces each run of whitespace inside it with {@code _}. Every command that
+     * takes a key must use this, so the same input always finds the same dotfile.
+     *
+     * @param key the key to sanitise.
+     * @return the sanitised key, blank if {@code key} was blank.
+     */
+    protected final @NotNull String sanitiseKey(@NotNull String key) {
+        return key.trim()
+                .replaceAll("\\s+", "_");
     }
 
     /**

@@ -22,6 +22,8 @@ import com.google.api.services.drive.DriveScopes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -41,6 +43,7 @@ import io.druidlabs.dotfiles.sync.SyncProvider;
 import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
 import io.druidlabs.dotfiles.sync.exceptions.SyncException;
 import io.druidlabs.dotfiles.util.ExceptionUtil;
+import io.druidlabs.dotfiles.util.OSUtil;
 import io.druidlabs.dotfiles.util.UserNotification;
 
 /**
@@ -64,6 +67,8 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
      * machine, so it is fixed.
      */
     private static final String USER_ID = "user";
+
+    private static final Logger logger = LoggerFactory.getLogger(GoogleDriveRemoteStore.class);
 
     /**
      * Used for the OAuth flow and the revoke request alike, so every network failure surfaces as the same
@@ -236,7 +241,7 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
                 .build();
 
         try {
-            new AuthorizationCodeInstalledApp(authFlow, receiver)
+            new AuthorizationCodeInstalledApp(authFlow, receiver, detachedBrowser())
                     .authorize(USER_ID);
 
         } catch (IOException e) {
@@ -246,6 +251,41 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
 
             throw new SyncException(message, e);
         }
+    }
+
+    /**
+     * Replaces the OAuth library's default browser, which starts the browser with this process's output streams, so
+     * the browser's own logs printed into the app's output and an IDE run didn't end until the browser was closed.
+     * This one prints the authorisation URL first, then starts the system opener ({@code rundll32} on Windows,
+     * {@code open} on macOS, {@code xdg-open} elsewhere) with its output discarded and without waiting for it.
+     * <p>
+     * Failing to start the opener is only logged, since the user can still open the printed URL themselves and
+     * {@link AuthorizationCodeInstalledApp#authorize(String)} keeps waiting for the redirect either way.
+     *
+     * @return the browser to pass to {@link AuthorizationCodeInstalledApp}.
+     */
+    private AuthorizationCodeInstalledApp.@NotNull Browser detachedBrowser() {
+        return url -> {
+            UserNotification.notifyUser("Attempting to open browser to login");
+            UserNotification.notifyUser("If the browser does not automatically open, visit {}",
+                    url);
+
+            ProcessBuilder commandRunner = switch (OSUtil.getCurrentOS()) {
+                case WINDOWS -> new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url);
+                case MAC_OS -> new ProcessBuilder("open", url);
+                default -> new ProcessBuilder("xdg-open", url);
+            };
+
+            commandRunner.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            commandRunner.redirectError(ProcessBuilder.Redirect.DISCARD);
+
+            try {
+                commandRunner.start();
+
+            } catch (IOException e) {
+                logger.error("Error opening browser", e);
+            }
+        };
     }
 
     @Override

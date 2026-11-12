@@ -1,12 +1,18 @@
 package io.druidlabs.dotfiles.sync;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.io.IOTasks;
+import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
+import io.druidlabs.dotfiles.sync.exceptions.SyncAuthenticationException;
+import io.druidlabs.dotfiles.sync.exceptions.SyncException;
 
 /**
  * A remote location that holds a single copy of the dotfiles save file.
@@ -55,6 +61,14 @@ public interface RemoteStore {
     }
 
     /**
+     * Returns the errors from checks that can't throw, such as {@link #isLoggedIn()}, and clears them, so a second
+     * call only returns errors raised since the first.
+     *
+     * @return the errors collected since the last call, oldest first.
+     */
+    @NotNull List<String> drainUnloggedErrors();
+
+    /**
      * Downloads the remote save file.
      *
      * @return the file's contents with its version tag, or an empty {@code Optional} if no remote file exists yet.
@@ -78,7 +92,9 @@ public interface RemoteStore {
      * Authenticates with the remote and stores the resulting credential locally.
      * This is the only method allowed to open a browser or otherwise involve the user.
      *
-     * @throws SyncException if the client credentials are missing, the user declines access, or the flow fails.
+     * @throws MissingCredentialsException if the client credentials are not in {@link #secureFilesPath()}.
+     * @throws SyncException               if the client credentials are invalid, the user declines access, or the
+     *                                     flow fails.
      */
     void login() throws SyncException;
 
@@ -100,8 +116,12 @@ public interface RemoteStore {
      * This is a local check only, it never contacts the remote, starts the authentication flow or creates any folders.
      * A stored credential that has expired or been revoked remotely still counts as logged in, until the next
      * {@link #fetch()} or {@link #upload(String)} fails with a {@link SyncAuthenticationException}.
+     * <p>
+     * This never throws. If the stored credential can't be read, it returns {@code false} and the reason is kept
+     * for {@link #drainUnloggedErrors()}.
      *
-     * @return {@code true} if a stored credential is present locally.
+     * @return {@code true} if a stored credential is present locally, {@code false} if none is or it could not be
+     * read.
      */
     boolean isLoggedIn();
 }

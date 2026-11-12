@@ -18,7 +18,6 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.store.DataStore;
 import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.drive.DriveScopes;
-import com.google.api.services.drive.model.User;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +37,9 @@ import java.util.Optional;
 import io.druidlabs.dotfiles.io.IOTasks;
 import io.druidlabs.dotfiles.sync.FetchResult;
 import io.druidlabs.dotfiles.sync.RemoteStore;
-import io.druidlabs.dotfiles.sync.SyncException;
 import io.druidlabs.dotfiles.sync.SyncProvider;
+import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
+import io.druidlabs.dotfiles.sync.exceptions.SyncException;
 import io.druidlabs.dotfiles.util.ExceptionUtil;
 import io.druidlabs.dotfiles.util.UserNotification;
 
@@ -93,8 +93,9 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
      * is missing.
      *
      * @return the flow, ready to authorise.
-     * @throws SyncException if {@code credentials.json} is missing or invalid.
-     * @throws IOException   if the token store could not be opened.
+     * @throws MissingCredentialsException if {@code credentials.json} is missing.
+     * @throws SyncException               if {@code credentials.json} is invalid.
+     * @throws IOException                 if the token store could not be opened.
      */
     private GoogleAuthorizationCodeFlow getAuthCodeFlow() throws IOException, SyncException {
         GoogleClientSecrets secrets = CredentialLoader.load(secureFilesPath());
@@ -123,20 +124,6 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
         DataStore<StoredCredential> credentialDataStore = StoredCredential.getDefaultDataStore(dataStoreFactory);
 
         return credentialDataStore.get(USER_ID);
-    }
-
-    /**
-     * Returns the errors from checks that can't throw, such as {@link #isLoggedIn()}, and clears them, so a second
-     * call only returns errors raised since the first.
-     *
-     * @return the errors collected since the last call, oldest first.
-     */
-    public @NotNull @Unmodifiable List<String> drainUnloggedErrors() {
-        List<String> copy = List.copyOf(unloggedErrors);
-
-        unloggedErrors.clear();
-
-        return copy;
     }
 
     /**
@@ -196,6 +183,15 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
     }
 
     @Override
+    public @NotNull @Unmodifiable List<String> drainUnloggedErrors() {
+        List<String> copy = List.copyOf(unloggedErrors);
+
+        unloggedErrors.clear();
+
+        return copy;
+    }
+
+    @Override
     public SyncProvider getSyncProvider() {
         return SyncProvider.GOOGLE_DRIVE;
     }
@@ -216,7 +212,11 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
             IOTasks.createSyncAuthFolder(secureFilesPath());
 
         } catch (IOException e) {
-            throw new SyncException("Failed to create sync folder", e);
+            String message = ExceptionUtil.describeIOFailure(e,
+                    "Failed to create sync folder because {}",
+                    "Failed to create sync folder");
+
+            throw new SyncException(message, e);
         }
 
         try {
@@ -225,7 +225,11 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
             }
 
         } catch (IOException e) {
-            throw new SyncException("Failed to establish OAuth flow", e);
+            String message = ExceptionUtil.describeIOFailure(e,
+                    "Failed to establish OAuth flow because {}",
+                    "Failed to establish OAuth flow");
+
+            throw new SyncException(message, e);
         }
 
         LocalServerReceiver receiver = new LocalServerReceiver.Builder()
@@ -236,7 +240,11 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
                     .authorize(USER_ID);
 
         } catch (IOException e) {
-            throw new SyncException("Failed to authorise login", e);
+            String message = ExceptionUtil.describeIOFailure(e,
+                    "Failed to authorise login because {}",
+                    "Failed to authorise login");
+
+            throw new SyncException(message, e);
         }
     }
 

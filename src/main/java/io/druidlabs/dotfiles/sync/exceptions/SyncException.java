@@ -1,4 +1,6 @@
-package io.druidlabs.dotfiles.sync;
+package io.druidlabs.dotfiles.sync.exceptions;
+
+import io.druidlabs.dotfiles.sync.RemoteStore;
 
 /**
  * Thrown when a sync operation against a {@link RemoteStore} fails.

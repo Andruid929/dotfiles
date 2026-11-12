@@ -144,8 +144,10 @@ public final class Configuration {
      * Puts every option's default value into the {@link Config} store.
      */
     private void loadDefaults() {
-        setDefaultConfig(ConfigOption.SYNC_PROVIDER);
-        setDefaultConfig(ConfigOption.LOG_CONFIG_ERRORS);
+        for (ConfigOption option : ConfigOption.values()) {
+            
+            setDefaultConfig(option);
+        }
     }
 
     /**
@@ -240,7 +242,7 @@ public final class Configuration {
      * @param option the config to read.
      * @return the config's current value, which is its default unless it was set or loaded from the file.
      */
-    public @Nullable String getConfig(@NotNull ConfigOption option) {
+    public String getConfig(@NotNull ConfigOption option) {
         String key = option.getConfigKey();
 
         return Config.get(key);

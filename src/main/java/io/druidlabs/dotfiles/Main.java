@@ -3,7 +3,16 @@ package io.druidlabs.dotfiles;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.druidlabs.dotfiles.commands.*;
+import io.druidlabs.dotfiles.commands.ConfigCommand;
+import io.druidlabs.dotfiles.commands.ListAllCommand;
+import io.druidlabs.dotfiles.commands.LogCommand;
+import io.druidlabs.dotfiles.commands.NewEntryCommand;
+import io.druidlabs.dotfiles.commands.PlaceCommand;
+import io.druidlabs.dotfiles.commands.PurgeCommand;
+import io.druidlabs.dotfiles.commands.RemoveEntryCommand;
+import io.druidlabs.dotfiles.commands.UpdateEntryCommand;
+import io.druidlabs.dotfiles.commands.ViewCommand;
+import io.druidlabs.dotfiles.commands.sync.LoginCommand;
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.util.ManifestVersionProvider;
 import io.druidlabs.dotfiles.util.UserNotification;
@@ -28,7 +37,8 @@ import picocli.CommandLine.Option;
                 ViewCommand.class,
                 PlaceCommand.class,
                 LogCommand.class,
-                ConfigCommand.class
+                ConfigCommand.class,
+                LoginCommand.class
         }
 )
 public class Main implements Runnable {

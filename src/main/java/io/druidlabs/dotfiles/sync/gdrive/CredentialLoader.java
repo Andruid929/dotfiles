@@ -12,7 +12,8 @@ import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.druidlabs.dotfiles.sync.SyncException;
+import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
+import io.druidlabs.dotfiles.sync.exceptions.SyncException;
 import io.druidlabs.dotfiles.util.ExceptionUtil;
 
 /**
@@ -33,8 +34,9 @@ public final class CredentialLoader {
     /**
      * @param gDriveFolderPath the folder holding the credentials file.
      * @return the parsed client secrets, which always hold an {@code installed} (desktop client) section.
-     * @throws SyncException if the file is missing, could not be read, is not valid JSON, or is not a
-     *                       desktop OAuth client file.
+     * @throws MissingCredentialsException if the file is missing.
+     * @throws SyncException               if the file could not be read, is not valid JSON, or is not a
+     *                                     desktop OAuth client file.
      */
     public static @NotNull GoogleClientSecrets load(@NotNull Path gDriveFolderPath) throws SyncException {
         Path credentialsJsonPath = gDriveFolderPath.resolve(CREDENTIALS_FILENAME);
@@ -43,7 +45,7 @@ public final class CredentialLoader {
             String message = interpolate("Credentials file '{}' not found. Refer to the documentation to see how to acquire this",
                     credentialsJsonPath);
 
-            throw new SyncException(message);
+            throw new MissingCredentialsException(message);
         }
 
         String contents;

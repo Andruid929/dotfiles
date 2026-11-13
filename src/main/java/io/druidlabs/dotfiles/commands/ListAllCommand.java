@@ -7,7 +7,9 @@ import java.util.Set;
 
 import io.druidlabs.dotfiles.Dotfile;
 import io.druidlabs.dotfiles.Worker;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 
 /**
  * Command to list all currently managed dotfiles.
@@ -17,32 +19,36 @@ import picocli.CommandLine.Command;
 public final class ListAllCommand extends CommandAction {
 
     @Override
-    public void run() {
+    public Integer call() {
         Set<Dotfile> loadedDotfiles = Worker.getLoadedDotfilesSet();
 
         if (loadedDotfiles.isEmpty()) {
-            System.out.println("Nothing to see here... yet");
+            UserNotification.notifyUser("Nothing to see here... yet");
 
-            return;
+            return ExitCode.OK;
         }
 
         int count = 0;
 
-        System.out.println(formatOutput("Num", "Key", "Filepath"));
+        UserNotification.notifyUser(formatOutput("Num", "Key", "Filepath"));
 
-        System.out.println(formatOutput("---", "---", "--------"));
+        UserNotification.notifyUser(formatOutput("---", "---", "--------"));
 
         for (Dotfile dotfile : loadedDotfiles) {
             String pathToFile = dotfile.getPathToFile().toString();
 
             String output = formatOutput(String.valueOf(++count), dotfile.getKey(), pathToFile);
 
-            System.out.println(output);
-            System.out.println();
+            UserNotification.notifyUser(output);
+            UserNotification.notifyUser("");
         }
 
+        return ExitCode.OK;
     }
 
+    /**
+     * Formats one row of the list in fixed-width columns: number, key, then file path.
+     */
     @NotNull
     @Contract(pure = true)
     private String formatOutput(String arg1, String arg2, String arg3) {

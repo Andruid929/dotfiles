@@ -6,12 +6,13 @@ import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Scanner;
 
 import io.druidlabs.dotfiles.Worker;
-import io.druidlabs.dotfiles.io.PathWriter;
+import io.druidlabs.dotfiles.util.ExceptionUtil;
+import io.druidlabs.dotfiles.util.UserNotification;
 import io.github.andruid929.leutils.wora.PathFinder;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -32,69 +33,77 @@ public final class PlaceCommand extends CommandAction {
     boolean createMissingDir = false;
 
     @Override
-    public void run() {
+    public Integer call() {
         if (targetKey == null || targetKey.isBlank()) {
-            LOGGER.error("I cannot identify file to place without its key");
+            UserNotification.notifyUserOfError("I cannot identify file to place without its key");
 
-            return;
+            return ExitCode.USAGE;
         }
 
-        String key = sanitise(targetKey, false);
+        String key = sanitiseKey(targetKey);
 
         var dotfile = Worker.getDotfile(key);
 
         if (dotfile == null) {
-            LOGGER.info("File with key '{}' not found", key);
+            UserNotification.notifyUserOfError("File with key '{}' not found", key);
 
-            return;
+            return ExitCode.USAGE;
         }
 
         Path filePath = validateOverridePath(dotfile.getPathToFile());
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            String confirmation;
+        String question;
 
-            if (Files.exists(filePath)) {
-                confirmation = interpolate("File '{}' already exists, this operation will overwrite it. Are you sure? (y/n): ",
-                        filePath);
+        if (Files.exists(filePath)) {
+            question = interpolate("File '{}' already exists, this operation will overwrite it. Are you sure?", filePath);
 
-            } else {
-                Path dirs = filePath.getParent();
+        } else {
+            Path dirs = filePath.getParent();
 
-                confirmation = interpolate("I am about to create {} in '{}', continue? (y/n): ",
-                        filePath.getFileName(), dirs);
+            question = interpolate("I am about to create {} in '{}', continue?", filePath.getFileName(), dirs);
+        }
+
+        if (!confirm(question)) {
+            UserNotification.notifyUser("Place operation cancelled");
+
+            UserNotification.notifyUser("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
+                    dotfile.getKey());
+
+            return ExitCode.OK;
+        }
+
+        try {
+            Path dirs = filePath.getParent();
+
+            if (createMissingDir && dirs != null && Files.notExists(dirs)) {
+                Files.createDirectories(dirs);
             }
 
-            System.out.print(confirmation);
-
-            String response = scanner.next();
-
-            switch (response.toLowerCase()) {
-                case "y", "yes" -> {
-                    Path dirs = filePath.getParent();
-
-                    if (createMissingDir && dirs != null && Files.notExists(dirs)) {
-                        Files.createDirectories(dirs);
-                    }
-
-                    placeFile(dotfile.getFileContents(), filePath);
-                }
-                case "n", "no" -> {
-                    LOGGER.info("Place operation cancelled");
-
-                    System.out.println(interpolate("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
-                            dotfile.getKey()));
-                }
-                default -> LOGGER.info("'{}' is not a valid response", response);
-            }
+            placeFile(dotfile.getFileContents(), filePath);
 
         } catch (IOException e) {
-            LOGGER.info("Oof tough luck, something bad happened while placing file");
-            LOGGER.debug("Error placing dotfile with key '{}' at '{}'", dotfile.getKey(), filePath);
-            LOGGER.error("Stacktrace:", e);
+
+            String message = ExceptionUtil.describeIOFailure(e, "Oof tough luck, something bad happened while placing file: {}",
+                    "Oof tough luck, something bad happened while placing file");
+
+            UserNotification.notifyUserOfError(message);
+
+            String logMessage = interpolate("Error placing dotfile with key '{}' at '{}'", dotfile.getKey(), filePath);
+
+            LOGGER.error(logMessage, e);
+
+            return ExitCode.SOFTWARE;
         }
+
+        return ExitCode.OK;
     }
 
+    /**
+     * Writes {@code contents} to {@code file}, creating it if needed and overwriting it otherwise.
+     * The file's folder must already exist.
+     *
+     * @throws IOException if the file could not be created or written.
+     */
     private void placeFile(String contents, Path file) throws IOException {
         try {
             Files.createFile(file);
@@ -103,19 +112,24 @@ public final class PlaceCommand extends CommandAction {
             LOGGER.debug("File '{}' already exists, overwriting", file);
         }
 
-        if (PathWriter.writeToFile(file, contents)) {
-            String outputMessage = interpolate("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
+        Files.writeString(file, contents);
 
-            System.out.println(outputMessage);
-        }
+        notifyAndLog("Successfully placed '{}' in '{}'", file.getFileName(), file.getParent());
     }
 
+    /**
+     * Works out where to place the file. Without {@code -p} it is the saved path. A trailing {@code #} places the
+     * saved filename in the given folder, and a bare name with no folder is resolved against the home folder.
+     *
+     * @param def the saved path.
+     * @return the path to place the file at.
+     */
     private Path validateOverridePath(Path def) {
         if (pathOverride == null) {
             return def;
         }
 
-        String stringPath = sanitise(pathOverride, true);
+        String stringPath = sanitise(pathOverride);
 
         Path fullPath;
 

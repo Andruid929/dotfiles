@@ -1,9 +1,24 @@
 package io.druidlabs.dotfiles;
 
-import io.druidlabs.dotfiles.commands.*;
-import io.druidlabs.dotfiles.defaults.FilePaths;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.druidlabs.dotfiles.commands.ConfigCommand;
+import io.druidlabs.dotfiles.commands.ListAllCommand;
+import io.druidlabs.dotfiles.commands.LogCommand;
+import io.druidlabs.dotfiles.commands.NewEntryCommand;
+import io.druidlabs.dotfiles.commands.PlaceCommand;
+import io.druidlabs.dotfiles.commands.PurgeCommand;
+import io.druidlabs.dotfiles.commands.RemoveEntryCommand;
+import io.druidlabs.dotfiles.commands.UpdateEntryCommand;
+import io.druidlabs.dotfiles.commands.ViewCommand;
+import io.druidlabs.dotfiles.commands.sync.LoginCommand;
+import io.druidlabs.dotfiles.constants.FilePaths;
+import io.druidlabs.dotfiles.util.ManifestVersionProvider;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
 /**
  * The main entry point for the Dotfiles application.
@@ -12,7 +27,7 @@ import picocli.CommandLine.Command;
 @Command(
         name = "dotfiles",
         description = "Save and restore config files",
-        version = "Dotfiles 1.0",
+        versionProvider = ManifestVersionProvider.class,
         subcommands = {
                 NewEntryCommand.class,
                 PurgeCommand.class,
@@ -21,12 +36,14 @@ import picocli.CommandLine.Command;
                 UpdateEntryCommand.class,
                 ViewCommand.class,
                 PlaceCommand.class,
-                LogCommand.class
-        },
-        mixinStandardHelpOptions = true
+                LogCommand.class,
+                ConfigCommand.class,
+                LoginCommand.class
+        }
 )
 public class Main implements Runnable {
 
+    // Must run before any logger is created, since logback.xml reads these properties when it starts
     static {
         final var LOG_FILE_PATH_STRING = FilePaths.LOG_FILE.toString();
 
@@ -38,27 +55,46 @@ public class Main implements Runnable {
         System.setProperty("CONSOLE_LOG_PATTERN", CONSOLE_LOG_PATTERN);
     }
 
+    @Option(names = {"-V", "-v", "--version"}, description = "Show Dotfiles app version", versionHelp = true)
+    boolean version = false;
+
+    @Option(names = {"-h", "--help"}, description = "Show this help message and exit", usageHelp = true)
+    boolean help = false;
+
     /**
      * Entry point of the application.
-     * Initializes the {@link Worker}, executes the command, and ensures a graceful shutdown.
+     * Initialises the {@link Worker}, executes the command, and ensures a graceful shutdown.
      *
      * @param args command-line arguments.
      */
-    public static void main(String[] args) {
-        Worker.start();
+    static void main(String[] args) {
+        int exitCode;
 
-        int exitCode = new CommandLine(new Main()).execute(args);
+        try {
+            Worker.start();
 
-        Worker.dismiss();
+            exitCode = new CommandLine(new Main()).execute(args);
+
+            Worker.dismiss();
+        } catch (Exception e) {
+
+            exitCode = CommandLine.ExitCode.SOFTWARE;
+
+            UserNotification.notifyUserOfError("Unexpected error occurred");
+
+            Logger unhandledExceptionLogger = LoggerFactory.getLogger("UnhandledExceptionReporter");
+
+            unhandledExceptionLogger.error("Unhandled exception thrown", e);
+        }
 
         System.exit(exitCode);
     }
 
+    /**
+     * Runs when {@code dotfiles} is called without a subcommand, pointing the user to the help.
+     */
     @Override
     public void run() {
-        System.out.println("Dotfiles: Save your configs");
-        System.out.println();
-
-        main(new String[]{"-h"});
+        System.out.println("Missing action, run with -h to see help");
     }
 }

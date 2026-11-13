@@ -1,16 +1,21 @@
 package io.druidlabs.dotfiles.commands;
 
-import org.jetbrains.annotations.Nullable;
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import io.druidlabs.dotfiles.Dotfile;
 import io.druidlabs.dotfiles.Worker;
-import io.druidlabs.dotfiles.errors.BlankValueException;
-import io.druidlabs.dotfiles.io.PathReader;
+import io.druidlabs.dotfiles.exceptions.BlankValueException;
+import io.druidlabs.dotfiles.util.ExceptionUtil;
 import io.druidlabs.dotfiles.util.PathUtil;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
 /**
@@ -27,21 +32,46 @@ public final class NewEntryCommand extends CommandAction {
     String filePath;
 
     @Override
-    public void run() {
+    public Integer call() {
+        String sanitisedKey = sanitiseKey(key);
+
+        if (sanitisedKey.isBlank()) {
+            UserNotification.notifyUser("Key cannot be blank or empty");
+
+            return ExitCode.USAGE;
+        }
+
+        if (isExistingKey(sanitisedKey)) {
+            UserNotification.notifyUser("Dotfile with key '{}' already exists", sanitisedKey);
+            UserNotification.notifyUser("Use 'dotfiles update {}' to update that dotfile instead", sanitisedKey);
+
+            return ExitCode.USAGE;
+        }
+
         try {
 
-            Path fileToRead = getFilePathToRead();
+            Path fileToRead;
 
-            if (fileToRead == null) {
-                return;
+            try {
+                fileToRead = getFilePathToRead();
+
+            } catch (CommandUsageException e) {
+                UserNotification.notifyUserOfError(e.getMessage());
+
+                return ExitCode.USAGE;
             }
 
-            String content = PathReader.readFile(fileToRead);
+            String content;
 
-            if (content.isBlank()) {
-                LOGGER.info("I am unable to read that file");
+            try {
+                content = Files.readString(fileToRead);
 
-                return;
+            } catch (IOException e) {
+                String message = ExceptionUtil.describeIOFailure(e, "Failed to read target file because {}", "Failed to read target file");
+
+                notifyAndLogErrorWithException(message, e);
+
+                return ExitCode.SOFTWARE;
             }
 
             String[] fileAndPath = PathUtil.getPathAndFile(fileToRead);
@@ -49,48 +79,55 @@ public final class NewEntryCommand extends CommandAction {
             String fileLocation = fileAndPath[0];
             String filename = fileAndPath[1];
 
-            Dotfile dotfile = new Dotfile(sanitise(key, false), content, fileLocation, filename);
+            Dotfile dotfile = new Dotfile(sanitisedKey, content, fileLocation, filename);
 
             Worker.addDotfile(dotfile);
 
-            LOGGER.info("Successfully added new file with key '{}'", key);
+            notifyAndLog("Successfully added new file with key '{}'", dotfile.getKey());
 
         } catch (BlankValueException e) {
-            LOGGER.info("You left something blank: {}", e.getMessage());
+            UserNotification.notifyUserOfError("You left something blank: {}", e.getMessage());
 
             LOGGER.error("Error adding dotfile: ", e);
+
+            return ExitCode.USAGE;
         }
+
+        return ExitCode.OK;
     }
 
-    @Nullable
-    private Path getFilePathToRead() {
+    /**
+     * Resolves the {@code -f} value to the file to save.
+     *
+     * @return the expanded path to an existing file.
+     * @throws CommandUsageException if the path is blank, is a folder or does not exist.
+     */
+    private @NotNull Path getFilePathToRead() throws CommandUsageException {
         if (filePath.isBlank()) {
-            LOGGER.info("Use the '-f' flag to direct me to the file I should read");
-            LOGGER.error("File path is blank");
-
-            return null;
+            throw new CommandUsageException("Use the '-f' flag to direct me to the file I should read");
         }
 
-        String expandedPath = PathUtil.expandPath(sanitise(filePath, true));
+        String expandedPath = sanitise(filePath);
 
         Path pathToFile = Path.of(expandedPath);
 
         if (Files.exists(pathToFile)) {
 
             if (Files.isDirectory(pathToFile)) {
-                LOGGER.info("I'm called dotFILES not dotFOLDERS: '{}'", pathToFile);
-                LOGGER.error("Expected file, got directory: '{}'", pathToFile);
+                String message = interpolate("I'm called dotFILES not dotFOLDERS: '{}' is a folder", pathToFile);
 
-                return null;
+                throw new CommandUsageException(message);
             }
 
             return pathToFile;
         }
 
-        LOGGER.info("I cannot find the file '{}', you sure it exists?", pathToFile);
-        LOGGER.error("Unable to find file '{}'", pathToFile);
+        String message = interpolate("I cannot find the file '{}', you sure it exists?", pathToFile);
 
-        return null;
+        throw new CommandUsageException(message);
+    }
 
+    private boolean isExistingKey(String key) {
+        return Worker.getDotfile(key) != null;
     }
 }

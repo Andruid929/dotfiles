@@ -1,10 +1,20 @@
 package io.druidlabs.dotfiles.commands;
 
-import java.util.Scanner;
+import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
 
-import io.druidlabs.dotfiles.io.IOUtil;
-import io.github.andruid929.leutils.wora.PathFinder;
+import java.io.IOException;
+import java.nio.file.FileSystemException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+
+import io.druidlabs.dotfiles.Worker;
+import io.druidlabs.dotfiles.constants.FilePaths;
+import io.druidlabs.dotfiles.io.IOTasks;
+import io.druidlabs.dotfiles.util.ExceptionUtil;
+import io.druidlabs.dotfiles.util.LoggerUtil;
+import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
 import picocli.CommandLine.Option;
 
 /**
@@ -15,68 +25,143 @@ import picocli.CommandLine.Option;
 public final class PurgeCommand extends CommandAction {
 
     @Option(names = {"-l", "--log"}, description = "Don't delete the logs file")
-    private boolean excludeLog = false;
+    boolean excludeLog = false;
 
     @Option(names = {"-s", "--save"}, description = "Don't delete the save file")
-    private boolean excludeSave = false;
+    boolean excludeSave = false;
+
+    @Option(names = {"-a", "--all"}, description = "Delete everything in the App folder")
+    boolean purgeAll = false;
 
     @Override
-    public void run() {
-        if (excludeSave && excludeLog) {
-            LOGGER.info("I have nothing to purge, bye");
+    public Integer call() {
+        if (purgeAll && (excludeLog || excludeSave)) {
+            UserNotification.notifyUserOfError("--all deletes everything, so it can't be combined with --log or --save");
 
-            return;
+            return ExitCode.USAGE;
         }
 
-        LOGGER.info("I will purge:");
+        if (excludeSave && excludeLog) {
+            UserNotification.notifyUser("I have nothing to purge, bye");
+
+            return ExitCode.OK;
+        }
+
+        if (purgeAll) {
+            if (!confirm("This will delete all app folders, are you sure?")) {
+                UserNotification.notifyUser("Purge cancelled");
+
+                return ExitCode.OK;
+            }
+
+            return purgeEverything();
+        }
+
+        UserNotification.notifyUser("I will purge:");
 
         if (!excludeLog) {
-            LOGGER.info("Log file");
+            UserNotification.notifyUser("Log file");
         }
 
         if (!excludeSave) {
-            LOGGER.info("Save file");
+            UserNotification.notifyUser("Save file");
         }
 
-        System.out.println();
+        UserNotification.notifyUser("");
 
-        System.out.print("Are you sure? (y/n) -> ");
+        if (!confirm("Are you sure?")) {
+            UserNotification.notifyUser("Purge cancelled");
 
-        try (Scanner scanner = new Scanner(System.in)) {
-            String response = scanner.next().toLowerCase();
+            return ExitCode.OK;
+        }
 
-            System.out.println();
+        if (!excludeSave) {
 
-            switch (response) {
-                case "y", "yes" -> {
+            try {
+                IOTasks.deleteFile(FilePaths.SAVE_FILE);
 
-                    PathFinder.createPathFromHomeRoot("/");
+                Worker.clearAllDotfiles();
 
-                    if (!excludeSave) {
+                Worker.disableSaving();
 
-                        if (IOUtil.deleteDotfiles()) {
-                            LOGGER.info("Purged saved files");
+                UserNotification.notifyUser("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
 
-                        } else {
-                            LOGGER.info("So uhm, I couldn't purge the save file");
-                        }
-                    }
+            } catch (IOException e) {
+                if (e instanceof NoSuchFileException nsfe) {
 
-                    if (!excludeLog) {
-                        if (IOUtil.deleteLogFile()) {
-                            LOGGER.info("Successfully purged logs file");
+                    UserNotification.notifyUserOfError("Cannot delete save file '{}' because it doesn't exist", nsfe.getFile());
+                } else {
 
-                        } else {
-                            LOGGER.info("So uhm, I couldn't purge the log file");
-                        }
-                    }
-
+                    UserNotification.notifyUserOfError("Unable to delete save file");
                 }
-                case "n", "no" -> LOGGER.info("Purge cancelled");
-
-                default -> LOGGER.info("I wanted a yes or no but anyways");
             }
         }
+
+        if (!excludeLog) {
+            try {
+                LoggerUtil.detachFileAppender();
+
+                IOTasks.deleteFile(FilePaths.LOG_FILE);
+
+                UserNotification.notifyUser("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
+
+            } catch (IOException ex) {
+                if (ex instanceof NoSuchFileException e) {
+
+                    UserNotification.notifyUserOfError("Cannot delete log file '{}' because it doesn't exist", e.getFile());
+                } else {
+
+                    UserNotification.notifyUserOfError("Unable to delete log file '{}'", FilePaths.LOG_FILE);
+                }
+            }
+        }
+
+        return ExitCode.OK;
     }
 
+    /**
+     * Deletes the whole {@link FilePaths#APP_FOLDER_DIR} and stops anything being saved on exit.
+     * {@link FilePaths#SYNC_SECURE_DIR} is outside it and is never touched.
+     *
+     * @return {@link ExitCode#SOFTWARE} if anything could not be deleted, otherwise {@link ExitCode#OK}.
+     */
+    private int purgeEverything() {
+        Path appFolder = FilePaths.APP_FOLDER_DIR;
+
+        try {
+            IOTasks.deleteFolder(appFolder);
+
+            Worker.clearAllDotfiles();
+
+            Worker.disableSaving();
+
+            UserNotification.notifyUser("Successfully deleted app folder");
+
+            return ExitCode.OK;
+
+        } catch (IOException e) {
+            if (e instanceof FileSystemException fse) {
+
+                String file = fse.getFile();
+
+                String reason = ExceptionUtil.getFileSystemExceptionReason(fse);
+
+                String message;
+
+                if (file == null) {
+                    message = interpolate("Unable to delete one or more files: {}", reason);
+
+                } else {
+                    message = interpolate("Unable to delete '{}': {}", file, reason);
+                }
+
+                notifyAndLogErrorWithException(message, e);
+
+            } else {
+                notifyAndLogErrorWithException("Failed to delete one or more files", e);
+            }
+
+            return ExitCode.SOFTWARE;
+        }
+    }
 }

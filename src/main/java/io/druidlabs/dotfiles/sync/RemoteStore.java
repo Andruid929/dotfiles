@@ -93,8 +93,8 @@ public interface RemoteStore {
      * This is the only method allowed to open a browser or otherwise involve the user.
      *
      * @throws MissingCredentialsException if the client credentials are not in {@link #secureFilesPath()}.
-     * @throws SyncException               if the client credentials are invalid, the user declines access, or the
-     *                                     flow fails.
+     * @throws SyncException               if a stored credential exists but can't be read, the client credentials
+     *                                     are invalid, the user declines access, or the flow fails.
      */
     void login() throws SyncException;
 
@@ -102,12 +102,15 @@ public interface RemoteStore {
      * Revokes the stored credential with the remote, then deletes it locally from {@link #tokensPath()}.
      * The revoke comes first so that any copy of the credential made before deletion stops working too, and the
      * local credential is kept if the revoke fails. A credential the remote reports as already invalid counts as
-     * revoked. The client credentials are never deleted. Does nothing if no credential is stored.
+     * revoked. The client credentials are never deleted. If no credential is stored, nothing is revoked, but an
+     * empty {@link #tokensPath()} folder is still deleted. A stored credential that holds no token is deleted without
+     * contacting the remote.
      *
+     * @return what was done, for the command to report. Never {@code null}.
      * @throws SyncException if the credential could not be revoked, for example while offline, or could not be
      *                       deleted after being revoked.
      */
-    void logout() throws SyncException;
+    LogoutResult logout() throws SyncException;
 
     /**
      * Checks whether a credential stored by {@link #login()} is present locally. The client credentials are not

@@ -38,6 +38,7 @@ import java.util.Optional;
 
 import io.druidlabs.dotfiles.io.IOTasks;
 import io.druidlabs.dotfiles.sync.FetchResult;
+import io.druidlabs.dotfiles.sync.LogoutResult;
 import io.druidlabs.dotfiles.sync.RemoteStore;
 import io.druidlabs.dotfiles.sync.SyncProvider;
 import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
@@ -187,6 +188,42 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
         }
     }
 
+    /**
+     * Replaces the OAuth library's default browser, which starts the browser with this process's output streams, so
+     * the browser's own logs printed into the app's output and an IDE run didn't end until the browser was closed.
+     * This one prints the authorisation URL first, then starts the system opener ({@code rundll32} on Windows,
+     * {@code open} on macOS, {@code xdg-open} elsewhere) with its output discarded and without waiting for it.
+     * <p>
+     * Failing to start the opener is only logged, since the user can still open the printed URL themselves and
+     * {@link AuthorizationCodeInstalledApp#authorize(String)} keeps waiting for the redirect either way.
+     *
+     * @return the browser to pass to {@link AuthorizationCodeInstalledApp}.
+     */
+    @NotNull
+    private AuthorizationCodeInstalledApp.Browser detachedBrowser() {
+        return url -> {
+            UserNotification.notifyUser("Attempting to open browser to login");
+            UserNotification.notifyUser("If the browser does not automatically open, visit {}",
+                    url);
+
+            ProcessBuilder commandRunner = switch (OSUtil.getCurrentOS()) {
+                case WINDOWS -> new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url);
+                case MAC_OS -> new ProcessBuilder("open", url);
+                default -> new ProcessBuilder("xdg-open", url);
+            };
+
+            commandRunner.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+            commandRunner.redirectError(ProcessBuilder.Redirect.DISCARD);
+
+            try {
+                commandRunner.start();
+
+            } catch (IOException e) {
+                logger.error("Error opening browser", e);
+            }
+        };
+    }
+
     @Override
     public @NotNull @Unmodifiable List<String> drainUnloggedErrors() {
         List<String> copy = List.copyOf(unloggedErrors);
@@ -225,6 +262,17 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
         }
 
         try {
+            loadStoredCredential();
+
+        } catch (IOException e) {
+            String message = ExceptionUtil.describeIOFailure(e,
+                    "Failed to login, the stored login could not be read because {}. Use 'dotfiles logout --force' to delete it, then login again",
+                    "Failed to login, the stored login could not be read. Use 'dotfiles logout --force' to delete it, then login again");
+
+            throw new SyncException(message, e);
+        }
+
+        try {
             if (authFlow == null) {
                 authFlow = getAuthCodeFlow();
             }
@@ -253,47 +301,10 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
         }
     }
 
-    /**
-     * Replaces the OAuth library's default browser, which starts the browser with this process's output streams, so
-     * the browser's own logs printed into the app's output and an IDE run didn't end until the browser was closed.
-     * This one prints the authorisation URL first, then starts the system opener ({@code rundll32} on Windows,
-     * {@code open} on macOS, {@code xdg-open} elsewhere) with its output discarded and without waiting for it.
-     * <p>
-     * Failing to start the opener is only logged, since the user can still open the printed URL themselves and
-     * {@link AuthorizationCodeInstalledApp#authorize(String)} keeps waiting for the redirect either way.
-     *
-     * @return the browser to pass to {@link AuthorizationCodeInstalledApp}.
-     */
-    private AuthorizationCodeInstalledApp.@NotNull Browser detachedBrowser() {
-        return url -> {
-            UserNotification.notifyUser("Attempting to open browser to login");
-            UserNotification.notifyUser("If the browser does not automatically open, visit {}",
-                    url);
-
-            ProcessBuilder commandRunner = switch (OSUtil.getCurrentOS()) {
-                case WINDOWS -> new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url);
-                case MAC_OS -> new ProcessBuilder("open", url);
-                default -> new ProcessBuilder("xdg-open", url);
-            };
-
-            commandRunner.redirectOutput(ProcessBuilder.Redirect.DISCARD);
-            commandRunner.redirectError(ProcessBuilder.Redirect.DISCARD);
-
-            try {
-                commandRunner.start();
-
-            } catch (IOException e) {
-                logger.error("Error opening browser", e);
-            }
-        };
-    }
-
     @Override
-    public void logout() throws SyncException {
+    public LogoutResult logout() throws SyncException {
         if (Files.notExists(tokensPath())) {
-            UserNotification.notifyUser("You are not logged in");
-
-            return;
+            return LogoutResult.NOT_LOGGED_IN;
         }
 
         StoredCredential credential;
@@ -302,12 +313,10 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
             credential = loadStoredCredential();
 
         } catch (IOException e) {
-            throw new SyncException("Failed to logout, error occurred loading local credential", e);
+            throw new SyncException("Failed to logout, error occurred loading local credential. Use --force to delete local credential without revoking the online credential", e);
         }
 
         if (credential == null) {
-            UserNotification.notifyUser("You are not logged in");
-
             try {
                 discardLocalCredential();
 
@@ -319,16 +328,13 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
                 throw new SyncException(message, e);
             }
 
-            return;
+            return LogoutResult.NOT_LOGGED_IN;
         }
 
         String token;
 
         if (credential.getRefreshToken() == null) {
             if (credential.getAccessToken() == null) {
-
-                UserNotification.notifyUser("Online revocation skipped due to missing tokens, deleting local credential");
-
                 try {
                     discardLocalCredential();
 
@@ -340,7 +346,7 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
                     throw new SyncException(message, e);
                 }
 
-                return;
+                return LogoutResult.DISCARDED_WITHOUT_REVOKE;
             }
 
             token = credential.getAccessToken();
@@ -350,8 +356,6 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
 
         try {
             revokeToken(token);
-
-            UserNotification.notifyUser("Online credential revoked successfully");
 
         } catch (IOException e) {
             String message = "Could not revoke login";
@@ -369,8 +373,6 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
         try {
             discardLocalCredential();
 
-            UserNotification.notifyUser("Local credential deleted successfully");
-
         } catch (IOException e) {
             String message = ExceptionUtil.describeIOFailure(e,
                     "Login revoked but failed to delete local credential because {}",
@@ -378,6 +380,8 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
 
             throw new SyncException(message, e);
         }
+
+        return LogoutResult.REVOKED;
     }
 
     @Override

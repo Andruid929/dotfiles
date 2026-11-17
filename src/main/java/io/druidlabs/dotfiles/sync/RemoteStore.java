@@ -61,6 +61,16 @@ public interface RemoteStore {
     }
 
     /**
+     * Checks that the client credentials in {@link #secureFilesPath()} are present and usable by this provider.
+     * This is a local check only, it never contacts the remote, starts the authentication flow or creates any folders.
+     *
+     * @throws MissingCredentialsException if the client credentials are not in {@link #secureFilesPath()}.
+     * @throws SyncException               if the client credentials could not be read or are not valid for this
+     *                                     provider.
+     */
+    void validateCredentials() throws SyncException;
+
+    /**
      * Returns the errors from checks that can't throw, such as {@link #isLoggedIn()}, and clears them, so a second
      * call only returns errors raised since the first.
      *

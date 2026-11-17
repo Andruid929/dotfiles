@@ -14,6 +14,7 @@ import io.druidlabs.dotfiles.commands.UpdateEntryCommand;
 import io.druidlabs.dotfiles.commands.ViewCommand;
 import io.druidlabs.dotfiles.commands.sync.LoginCommand;
 import io.druidlabs.dotfiles.commands.sync.LogoutCommand;
+import io.druidlabs.dotfiles.commands.sync.StatusCommand;
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.util.ManifestVersionProvider;
 import io.druidlabs.dotfiles.util.UserNotification;
@@ -40,7 +41,8 @@ import picocli.CommandLine.Option;
                 LogCommand.class,
                 ConfigCommand.class,
                 LoginCommand.class,
-                LogoutCommand.class
+                LogoutCommand.class,
+                StatusCommand.class
         }
 )
 public class Main implements Runnable {

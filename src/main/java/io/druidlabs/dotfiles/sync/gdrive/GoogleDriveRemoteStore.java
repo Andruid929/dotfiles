@@ -239,6 +239,11 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
     }
 
     @Override
+    public void validateCredentials() throws SyncException {
+        CredentialLoader.load(secureFilesPath());
+    }
+
+    @Override
     public @NotNull Optional<FetchResult> fetch() throws SyncException {
         return Optional.empty();
     }

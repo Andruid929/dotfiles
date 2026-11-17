@@ -202,8 +202,8 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
     @NotNull
     private AuthorizationCodeInstalledApp.Browser detachedBrowser() {
         return url -> {
-            UserNotification.notifyUser("Attempting to open browser to login");
-            UserNotification.notifyUser("If the browser does not automatically open, visit {}",
+            UserNotification.notify("Attempting to open browser to login");
+            UserNotification.notify("If the browser does not automatically open, visit {}",
                     url);
 
             ProcessBuilder commandRunner = switch (OSUtil.getCurrentOS()) {

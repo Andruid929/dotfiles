@@ -26,13 +26,13 @@ public final class LoginCommand extends CommandAction {
             store = SyncWorker.getRemoteStore();
 
         } catch (MissingSyncProviderException e) {
-            notifyAndLogError("Failed to login. {}", e.getMessage());
+            notifyAndLogFailure("Failed to login. {}", e.getMessage());
 
             return ExitCode.USAGE;
         }
 
         if (store.isLoggedIn()) {
-            UserNotification.notifyUser("You are already logged in");
+            UserNotification.notify("You are already logged in");
 
             return ExitCode.OK;
         }
@@ -43,12 +43,12 @@ public final class LoginCommand extends CommandAction {
         } catch (SyncException e) {
 
             if (e instanceof MissingCredentialsException) {
-                notifyAndLogError("Failed to login. {}", e.getMessage());
+                notifyAndLogFailure("Failed to login. {}", e.getMessage());
 
                 return ExitCode.USAGE;
 
             } else {
-                notifyAndLogErrorWithException(e.getMessage(), e);
+                notifyAndLogFailureWithException(e.getMessage(), e);
 
                 return ExitCode.SOFTWARE;
             }

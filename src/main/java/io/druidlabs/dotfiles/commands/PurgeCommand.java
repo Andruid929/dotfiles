@@ -36,20 +36,20 @@ public final class PurgeCommand extends CommandAction {
     @Override
     public Integer call() {
         if (purgeAll && (excludeLog || excludeSave)) {
-            UserNotification.notifyUserOfError("--all deletes everything, so it can't be combined with --log or --save");
+            UserNotification.notifyFailure("--all deletes everything, so it can't be combined with --log or --save");
 
             return ExitCode.USAGE;
         }
 
         if (excludeSave && excludeLog) {
-            UserNotification.notifyUser("I have nothing to purge, bye");
+            UserNotification.notify("I have nothing to purge, bye");
 
             return ExitCode.OK;
         }
 
         if (purgeAll) {
             if (!confirm("This will delete all app folders, are you sure?")) {
-                UserNotification.notifyUser("Purge cancelled");
+                UserNotification.notify("Purge cancelled");
 
                 return ExitCode.OK;
             }
@@ -57,20 +57,20 @@ public final class PurgeCommand extends CommandAction {
             return purgeEverything();
         }
 
-        UserNotification.notifyUser("I will purge:");
+        UserNotification.notify("I will purge:");
 
         if (!excludeLog) {
-            UserNotification.notifyUser("Log file");
+            UserNotification.notify("Log file");
         }
 
         if (!excludeSave) {
-            UserNotification.notifyUser("Save file");
+            UserNotification.notify("Save file");
         }
 
-        UserNotification.notifyUser("");
+        UserNotification.notify("");
 
         if (!confirm("Are you sure?")) {
-            UserNotification.notifyUser("Purge cancelled");
+            UserNotification.notify("Purge cancelled");
 
             return ExitCode.OK;
         }
@@ -84,15 +84,15 @@ public final class PurgeCommand extends CommandAction {
 
                 Worker.disableSaving();
 
-                UserNotification.notifyUser("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
+                UserNotification.notify("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
 
             } catch (IOException e) {
                 if (e instanceof NoSuchFileException nsfe) {
 
-                    UserNotification.notifyUserOfError("Cannot delete save file '{}' because it doesn't exist", nsfe.getFile());
+                    UserNotification.notifyFailure("Cannot delete save file '{}' because it doesn't exist", nsfe.getFile());
                 } else {
 
-                    UserNotification.notifyUserOfError("Unable to delete save file");
+                    UserNotification.notifyFailure("Unable to delete save file");
                 }
             }
         }
@@ -103,15 +103,15 @@ public final class PurgeCommand extends CommandAction {
 
                 IOTasks.deleteFile(FilePaths.LOG_FILE);
 
-                UserNotification.notifyUser("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
+                UserNotification.notify("Successfully deleted log file '{}'", FilePaths.LOG_FILE);
 
             } catch (IOException ex) {
                 if (ex instanceof NoSuchFileException e) {
 
-                    UserNotification.notifyUserOfError("Cannot delete log file '{}' because it doesn't exist", e.getFile());
+                    UserNotification.notifyFailure("Cannot delete log file '{}' because it doesn't exist", e.getFile());
                 } else {
 
-                    UserNotification.notifyUserOfError("Unable to delete log file '{}'", FilePaths.LOG_FILE);
+                    UserNotification.notifyFailure("Unable to delete log file '{}'", FilePaths.LOG_FILE);
                 }
             }
         }
@@ -135,7 +135,7 @@ public final class PurgeCommand extends CommandAction {
 
             Worker.disableSaving();
 
-            UserNotification.notifyUser("Successfully deleted app folder");
+            UserNotification.notify("Successfully deleted app folder");
 
             return ExitCode.OK;
 
@@ -155,10 +155,10 @@ public final class PurgeCommand extends CommandAction {
                     message = interpolate("Unable to delete '{}': {}", file, reason);
                 }
 
-                notifyAndLogErrorWithException(message, e);
+                notifyAndLogFailureWithException(message, e);
 
             } else {
-                notifyAndLogErrorWithException("Failed to delete one or more files", e);
+                notifyAndLogFailureWithException("Failed to delete one or more files", e);
             }
 
             return ExitCode.SOFTWARE;

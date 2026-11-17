@@ -43,7 +43,7 @@ public final class ConfigCommand extends CommandAction {
         }
 
         if (configuration.isSavingBlocked()) {
-            UserNotification.notifyUserOfError("The config file could not be read, so configs can't be changed. "
+            UserNotification.notifyFailure("The config file could not be read, so configs can't be changed. "
                     + "Fix or remove it and try again");
 
             return ExitCode.SOFTWARE;
@@ -68,22 +68,22 @@ public final class ConfigCommand extends CommandAction {
 
         String noun = messages.size() == 1 ? "Issue" : "Issues";
 
-        UserNotification.notifyUser("{} with loading configs", noun);
+        UserNotification.notify("{} with loading configs", noun);
 
-        messages.forEach(UserNotification::notifyUser);
+        messages.forEach(UserNotification::notify);
 
-        UserNotification.notifyUser("");
+        UserNotification.notify("");
     }
 
     /**
      * Prints every config with its current value and description.
      */
     private void listConfigs(@NotNull Configuration configuration) {
-        UserNotification.notifyUser("Dotfiles configs");
-        UserNotification.notifyUser("");
+        UserNotification.notify("Dotfiles configs");
+        UserNotification.notify("");
 
         for (ConfigOption option : ConfigOption.values()) {
-            UserNotification.notifyUser("{} -> {}: {}", option.getConfigKey(), configuration.getConfig(option),
+            UserNotification.notify("{} -> {}: {}", option.getConfigKey(), configuration.getConfig(option),
                     option.getDescription());
         }
     }
@@ -97,7 +97,7 @@ public final class ConfigCommand extends CommandAction {
      */
     private int handleReset(@NotNull Configuration configuration, @NotNull String resetKey) {
         if (resetKey.isBlank()) {
-            UserNotification.notifyUserOfError("--reset needs a config key, or 'all' to reset everything");
+            UserNotification.notifyFailure("--reset needs a config key, or 'all' to reset everything");
 
             return ExitCode.USAGE;
         }
@@ -110,7 +110,7 @@ public final class ConfigCommand extends CommandAction {
             configuration.resetToDefault();
 
             if (before.equals(configuration.getAllConfigs())) {
-                UserNotification.notifyUser("All configs are already using their defaults");
+                UserNotification.notify("All configs are already using their defaults");
 
             } else {
                 notifyAndLog("Reset all configs to their defaults");
@@ -133,7 +133,7 @@ public final class ConfigCommand extends CommandAction {
         String defaultValue = option.getDefaultValue();
 
         if (defaultValue.equals(configuration.getConfig(option))) {
-            UserNotification.notifyUser("Config {} is already using its default", configKey);
+            UserNotification.notify("Config {} is already using its default", configKey);
 
             return ExitCode.OK;
         }
@@ -159,7 +159,7 @@ public final class ConfigCommand extends CommandAction {
         String[] keyAndValue = keyValue.split(":", 2);
 
         if (keyAndValue.length != 2 || keyAndValue[0].isBlank()) {
-            UserNotification.notifyUserOfError("--set needs a key:value pair, for example SyncProvider:GDrive");
+            UserNotification.notifyFailure("--set needs a key:value pair, for example SyncProvider:GDrive");
 
             return ExitCode.USAGE;
         }
@@ -183,7 +183,7 @@ public final class ConfigCommand extends CommandAction {
             configuration.setConfig(option, keyAndValue[1]);
 
         } catch (InvalidConfigException e) {
-            UserNotification.notifyUserOfError(e.getMessage());
+            UserNotification.notifyFailure(e.getMessage());
 
             return ExitCode.USAGE;
         }
@@ -191,7 +191,7 @@ public final class ConfigCommand extends CommandAction {
         String newValue = configuration.getConfig(option);
 
         if (Objects.equals(previousValue, newValue)) {
-            UserNotification.notifyUser("Config {} is already set to '{}'", configKey, newValue);
+            UserNotification.notify("Config {} is already set to '{}'", configKey, newValue);
 
             return ExitCode.OK;
         }
@@ -211,7 +211,7 @@ public final class ConfigCommand extends CommandAction {
                 .map(ConfigOption::getConfigKey)
                 .collect(Collectors.joining(", "));
 
-        UserNotification.notifyUserOfError("'{}' is not a supported config. Supported configs: {}", key, supportedKeys);
+        UserNotification.notifyFailure("'{}' is not a supported config. Supported configs: {}", key, supportedKeys);
     }
 
     /**
@@ -231,7 +231,7 @@ public final class ConfigCommand extends CommandAction {
             return;
         }
 
-        UserNotification.notifyUser("{}'s credentials will be revoked the next time you run a sync command",
+        UserNotification.notify("{}'s credentials will be revoked the next time you run a sync command",
                 oldProvider.getName());
     }
 

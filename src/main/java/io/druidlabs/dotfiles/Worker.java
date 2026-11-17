@@ -113,7 +113,7 @@ public final class Worker {
                     message = reason;
                 }
 
-                UserNotification.notifyUserOfError(message);
+                UserNotification.notifyFailure(message);
 
                 System.exit(CommandLine.ExitCode.SOFTWARE);
 
@@ -124,7 +124,7 @@ public final class Worker {
                 message = "Error occurred initialising program";
             }
 
-            UserNotification.notifyUserOfError(message);
+            UserNotification.notifyFailure(message);
 
             logger.error(message, ioe);
 
@@ -157,7 +157,7 @@ public final class Worker {
                 message = "Failed to save dotfiles";
             }
 
-            UserNotification.notifyUserOfError(message);
+            UserNotification.notifyFailure(message);
 
             logger.error(message, e);
         }

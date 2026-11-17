@@ -41,7 +41,7 @@ public final class LogoutCommand extends CommandAction {
             store = SyncWorker.getRemoteStore();
 
         } catch (MissingSyncProviderException e) {
-            notifyAndLogError("Failed to logout. {}", e.getMessage());
+            notifyAndLogFailure("Failed to logout. {}", e.getMessage());
 
             return ExitCode.USAGE;
         }
@@ -56,13 +56,13 @@ public final class LogoutCommand extends CommandAction {
                 String message = ExceptionUtil.describeIOFailure(e, "Failed to delete local credential because {}",
                         "Failed to delete local credential");
 
-                notifyAndLogErrorWithException(message, e);
+                notifyAndLogFailureWithException(message, e);
 
                 return ExitCode.SOFTWARE;
             }
 
             if (!credentialStored) {
-                UserNotification.notifyUser("You are not logged in");
+                UserNotification.notify("You are not logged in");
 
                 return ExitCode.OK;
             }
@@ -82,7 +82,7 @@ public final class LogoutCommand extends CommandAction {
             result = store.logout();
 
         } catch (SyncException e) {
-            notifyAndLogErrorWithException(e.getMessage(), e);
+            notifyAndLogFailureWithException(e.getMessage(), e);
 
             return ExitCode.SOFTWARE;
         }
@@ -90,7 +90,7 @@ public final class LogoutCommand extends CommandAction {
         String message = getResultMessage(result);
 
         if (result.equals(LogoutResult.NOT_LOGGED_IN)) {
-            UserNotification.notifyUser(message);
+            UserNotification.notify(message);
 
         } else {
             notifyAndLog(message);

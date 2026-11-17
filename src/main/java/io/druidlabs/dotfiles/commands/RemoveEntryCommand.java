@@ -19,17 +19,17 @@ public final class RemoveEntryCommand extends CommandAction {
     @Override
     public Integer call() {
         if (key.isBlank()) {
-            UserNotification.notifyUser("It's hard to remove an element whose key I don't know");
+            UserNotification.notify("It's hard to remove an element whose key I don't know");
 
             return CommandLine.ExitCode.OK;
         }
 
         String dotfileKey = sanitiseKey(key);
 
-        UserNotification.notifyUser("I hope it goes without saying that there's no Ctrl-Z for this operation");
+        UserNotification.notify("I hope it goes without saying that there's no Ctrl-Z for this operation");
 
         if (!confirm("Are you sure?")) {
-            UserNotification.notifyUser("Remove operation cancelled");
+            UserNotification.notify("Remove operation cancelled");
 
             return CommandLine.ExitCode.OK;
         }
@@ -40,7 +40,7 @@ public final class RemoveEntryCommand extends CommandAction {
             notifyAndLog("Successfully removed file with key '{}'", dotfileKey);
 
         } else {
-            UserNotification.notifyUser("No saved file found with key '{}'", dotfileKey);
+            UserNotification.notify("No saved file found with key '{}'", dotfileKey);
         }
 
         return CommandLine.ExitCode.OK;

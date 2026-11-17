@@ -23,24 +23,24 @@ public final class ListAllCommand extends CommandAction {
         Set<Dotfile> loadedDotfiles = Worker.getLoadedDotfilesSet();
 
         if (loadedDotfiles.isEmpty()) {
-            UserNotification.notifyUser("Nothing to see here... yet");
+            UserNotification.notify("Nothing to see here... yet");
 
             return ExitCode.OK;
         }
 
         int count = 0;
 
-        UserNotification.notifyUser(formatOutput("Num", "Key", "Filepath"));
+        UserNotification.notify(formatOutput("Num", "Key", "Filepath"));
 
-        UserNotification.notifyUser(formatOutput("---", "---", "--------"));
+        UserNotification.notify(formatOutput("---", "---", "--------"));
 
         for (Dotfile dotfile : loadedDotfiles) {
             String pathToFile = dotfile.getPathToFile().toString();
 
             String output = formatOutput(String.valueOf(++count), dotfile.getKey(), pathToFile);
 
-            UserNotification.notifyUser(output);
-            UserNotification.notifyUser("");
+            UserNotification.notify(output);
+            UserNotification.notify("");
         }
 
         return ExitCode.OK;

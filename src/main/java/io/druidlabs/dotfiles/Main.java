@@ -82,7 +82,7 @@ public class Main implements Runnable {
 
             exitCode = CommandLine.ExitCode.SOFTWARE;
 
-            UserNotification.notifyUserOfError("Unexpected error occurred");
+            UserNotification.notifyFailure("Unexpected error occurred");
 
             Logger unhandledExceptionLogger = LoggerFactory.getLogger("UnhandledExceptionReporter");
 

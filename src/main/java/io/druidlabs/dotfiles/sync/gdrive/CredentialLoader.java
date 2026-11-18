@@ -27,6 +27,12 @@ public final class CredentialLoader {
      */
     public static final String CREDENTIALS_FILENAME = "credentials.json";
 
+    /**
+     * The guide to creating the client credentials, linked from the missing-file message. It only resolves once the
+     * guide is on {@code master}, and builds already released keep printing it, so don't rename or move the guide.
+     */
+    public static final String SETUP_GUIDE_URL = "https://github.com/Andruid929/dotfiles/blob/master/docs/google-drive-setup.md";
+
     private CredentialLoader() {
         //Utility classes cannot be instantiated
     }
@@ -42,8 +48,8 @@ public final class CredentialLoader {
         Path credentialsJsonPath = gDriveFolderPath.resolve(CREDENTIALS_FILENAME);
 
         if (Files.notExists(credentialsJsonPath)) {
-            String message = interpolate("Credentials file '{}' not found. Download it as the documentation describes, then add it with 'dotfiles login --credentials <path>'",
-                    credentialsJsonPath);
+            String message = interpolate("Credentials file '{}' not found. Create a Desktop app OAuth client for the Google Drive API, then add its downloaded file with 'dotfiles login --credentials <path>'{}Setup guide: {}",
+                    credentialsJsonPath, System.lineSeparator(), SETUP_GUIDE_URL);
 
             throw new MissingCredentialsException(message);
         }

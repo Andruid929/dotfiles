@@ -4,9 +4,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.stream.Stream;
 
 import io.druidlabs.dotfiles.commands.CommandAction;
 import io.druidlabs.dotfiles.sync.LogoutResult;
@@ -47,7 +44,8 @@ public final class LogoutCommand extends CommandAction {
         }
 
         if (forceLogout) {
-            boolean credentialStored = holdsAnything(store.tokensPath());
+            // Only decides the warning, the delete always runs. An unreadable store may hold a live login, so warn
+            boolean credentialStored = store.isLoggedIn() || !store.drainUnloggedErrors().isEmpty();
 
             try {
                 store.discardLocalCredential();
@@ -97,26 +95,6 @@ public final class LogoutCommand extends CommandAction {
         }
 
         return ExitCode.OK;
-    }
-
-    /**
-     * Checks whether {@code folder} exists and holds anything, so {@code --force} only warns about a live login
-     * when there was a credential to delete. An empty folder, such as one left by a cancelled login, holds none.
-     *
-     * @param folder the folder to check.
-     * @return {@code true} if the folder holds anything, or could not be listed, so a credential is assumed.
-     */
-    private boolean holdsAnything(@NotNull Path folder) {
-        if (Files.notExists(folder)) {
-            return false;
-        }
-
-        try (Stream<Path> entries = Files.list(folder)) {
-            return entries.findAny().isPresent();
-
-        } catch (IOException e) {
-            return true;
-        }
     }
 
     @Contract(pure = true)

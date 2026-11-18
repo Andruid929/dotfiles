@@ -116,12 +116,14 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
 
     /**
      * Reads the stored credential straight from {@link #tokensPath()}, so it works without {@code credentials.json}.
+     * Opening the token store creates its file when missing, so a missing file is checked first, keeping this
+     * read-only for {@link #isLoggedIn()} and {@code status}.
      *
-     * @return the stored credential, or {@code null} if {@code tokens/} does not exist or holds none.
+     * @return the stored credential, or {@code null} if the token store does not exist or holds none.
      * @throws IOException if the token store could not be read.
      */
     private @Nullable StoredCredential loadStoredCredential() throws IOException {
-        if (Files.notExists(tokensPath())) {
+        if (Files.notExists(tokensPath().resolve(StoredCredential.DEFAULT_DATA_STORE_ID))) {
             return null;
         }
 

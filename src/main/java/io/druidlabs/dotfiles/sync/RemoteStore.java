@@ -126,7 +126,7 @@ public interface RemoteStore {
      * Checks whether a credential stored by {@link #login()} is present locally. The client credentials are not
      * checked, a missing or invalid client credentials file is reported by the operations that need it.
      * <p>
-     * This is a local check only, it never contacts the remote, starts the authentication flow or creates any folders.
+     * This is a local check only, it never contacts the remote, starts the authentication flow or writes anything.
      * A stored credential that has expired or been revoked remotely still counts as logged in, until the next
      * {@link #fetch()} or {@link #upload(String)} fails with a {@link SyncAuthenticationException}.
      * <p>

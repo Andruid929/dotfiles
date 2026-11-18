@@ -42,7 +42,7 @@ public final class CredentialLoader {
         Path credentialsJsonPath = gDriveFolderPath.resolve(CREDENTIALS_FILENAME);
 
         if (Files.notExists(credentialsJsonPath)) {
-            String message = interpolate("Credentials file '{}' not found. Refer to the documentation to see how to acquire this",
+            String message = interpolate("Credentials file '{}' not found. Download it as the documentation describes, then add it with 'dotfiles login --credentials <path>'",
                     credentialsJsonPath);
 
             throw new MissingCredentialsException(message);
@@ -60,6 +60,17 @@ public final class CredentialLoader {
             throw new SyncException(message, e);
         }
 
+        return parse(contents);
+    }
+
+    /**
+     * Checks the contents of a client credentials file, wherever it was read from.
+     *
+     * @param contents the file's contents.
+     * @return the parsed client secrets, which always hold an {@code installed} (desktop client) section.
+     * @throws SyncException if the contents are not valid JSON, or not a desktop OAuth client file.
+     */
+    public static @NotNull GoogleClientSecrets parse(@NotNull String contents) throws SyncException {
         JsonFactory factory = GoogleDriveRemoteStore.GSON_FACTORY;
 
         GoogleClientSecrets secrets;

@@ -30,6 +30,7 @@ import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import io.druidlabs.dotfiles.io.IOTasks;
+import io.druidlabs.dotfiles.sync.CredentialImportResult;
 import io.druidlabs.dotfiles.sync.FetchResult;
 import io.druidlabs.dotfiles.sync.LogoutResult;
 import io.druidlabs.dotfiles.sync.RemoteStore;
@@ -243,6 +245,11 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
     @Override
     public void validateCredentials() throws SyncException {
         CredentialLoader.load(secureFilesPath());
+    }
+
+    @Override
+    public @NotNull CredentialImportResult importCredentials(@NotNull Path source, boolean replace) throws SyncException {
+        return CredentialImporter.importFrom(secureFilesPath(), source, replace);
     }
 
     @Override

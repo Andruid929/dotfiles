@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.io.IOTasks;
+import io.druidlabs.dotfiles.sync.exceptions.CredentialImportException;
 import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
 import io.druidlabs.dotfiles.sync.exceptions.SyncAuthenticationException;
 import io.druidlabs.dotfiles.sync.exceptions.SyncException;
@@ -69,6 +70,22 @@ public interface RemoteStore {
      *                                     provider.
      */
     void validateCredentials() throws SyncException;
+
+    /**
+     * Copies a client credentials file the user downloaded from the provider into {@link #secureFilesPath()},
+     * creating and restricting that folder if needed, after the same checks {@link #validateCredentials()} runs.
+     * This is a local copy only, it never contacts the remote. The original is left in place.
+     * <p>
+     * The caller must make sure no login is stored first, since a stored login belongs to the client credentials it
+     * was made with.
+     *
+     * @param source  the downloaded file, or a folder holding exactly one file the provider recognises.
+     * @param replace whether a different credentials file already in place may be overwritten, which can't be undone.
+     * @return what was done, for the command to report. Never {@code null}.
+     * @throws CredentialImportException if {@code source} can't be used, for a reason the user can fix.
+     * @throws SyncException             if the credentials file in place could not be read or written.
+     */
+    @NotNull CredentialImportResult importCredentials(@NotNull Path source, boolean replace) throws SyncException;
 
     /**
      * Returns the errors from checks that can't throw, such as {@link #isLoggedIn()}, and clears them, so a second

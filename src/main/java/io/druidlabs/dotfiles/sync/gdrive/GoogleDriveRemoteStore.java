@@ -298,9 +298,19 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
                     .authorize(USER_ID);
 
         } catch (IOException e) {
-            String message = ExceptionUtil.describeIOFailure(e,
-                    "Failed to authorise login because {}",
-                    "Failed to authorise login");
+            String message;
+
+            if (e instanceof UnknownHostException || e instanceof ConnectException) {
+                message = "Failed to authorise login because you are offline. Try again once you are connected";
+
+            } else if (e instanceof SocketTimeoutException) {
+                message = "Failed to authorise login, you are on a slow network. Try again later";
+
+            } else {
+                message = ExceptionUtil.describeIOFailure(e,
+                        "Failed to authorise login because {}",
+                        "Failed to authorise login");
+            }
 
             throw new SyncException(message, e);
         }

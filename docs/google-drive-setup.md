@@ -45,6 +45,10 @@ You don't need to add any scopes. dotfiles asks for `drive.file` itself when you
 
 `drive.file` doesn't need Google's review, so the app is usable as soon as it is published.
 
+If you'd rather leave the app in **Testing**, Google only lets listed test users log in. On the same **Audience**
+page, under **Test users** (below the OAuth user cap), choose **+ Add users** and enter your Google account's email
+address. This section only appears while the app is in Testing, and logins still expire after 7 days.
+
 ## 5. Create a Desktop app client
 
 1. Go to **Google Auth platform > Clients** and choose **Create client**.
@@ -131,7 +135,7 @@ again, it says so and logs in as usual.
 - **You have to log in again every week:** the app is still in **Testing**. Publish it (step 4), then run
   `dotfiles logout` and `dotfiles login`.
 - **Google blocks the login, saying the app is only available to testers:** the app is still in **Testing** and your
-  account isn't a test user. Publish it (step 4).
+  account isn't a test user. Publish it, or add your account as a test user (both in step 4).
 
 To remove dotfiles' access to your Drive, run `dotfiles logout`. You can also remove it from the
 [Google account permissions page](https://myaccount.google.com/permissions).

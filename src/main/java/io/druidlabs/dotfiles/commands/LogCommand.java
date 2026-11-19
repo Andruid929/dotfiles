@@ -21,8 +21,8 @@ public class LogCommand extends CommandAction {
 
     @Override
     public Integer call() {
-        UserNotification.notifyUser("You can find the logs at '{}'", FilePaths.LOG_FILE);
-        UserNotification.notifyUser("");
+        UserNotification.notify("You can find the logs at '{}'", FilePaths.LOG_FILE);
+        UserNotification.notify("");
 
         if (readLogs) {
             String logContents;
@@ -33,7 +33,7 @@ public class LogCommand extends CommandAction {
             } catch (IOException e) {
                 String message = ExceptionUtil.describeIOFailure(e, "Failed to read log file because {}", "Failed to read log file");
 
-                notifyAndLogErrorWithException(message, e);
+                notifyAndLogFailureWithException(message, e);
 
                 return ExitCode.SOFTWARE;
             }

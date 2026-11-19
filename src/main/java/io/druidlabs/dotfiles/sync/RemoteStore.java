@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.io.IOTasks;
+import io.druidlabs.dotfiles.sync.exceptions.CredentialImportException;
 import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
 import io.druidlabs.dotfiles.sync.exceptions.SyncAuthenticationException;
 import io.druidlabs.dotfiles.sync.exceptions.SyncException;
@@ -61,6 +62,32 @@ public interface RemoteStore {
     }
 
     /**
+     * Checks that the client credentials in {@link #secureFilesPath()} are present and usable by this provider.
+     * This is a local check only, it never contacts the remote, starts the authentication flow or creates any folders.
+     *
+     * @throws MissingCredentialsException if the client credentials are not in {@link #secureFilesPath()}.
+     * @throws SyncException               if the client credentials could not be read or are not valid for this
+     *                                     provider.
+     */
+    void validateCredentials() throws SyncException;
+
+    /**
+     * Copies a client credentials file the user downloaded from the provider into {@link #secureFilesPath()},
+     * creating and restricting that folder if needed, after the same checks {@link #validateCredentials()} runs.
+     * This is a local copy only, it never contacts the remote. The original is left in place.
+     * <p>
+     * The caller must make sure no login is stored first, since a stored login belongs to the client credentials it
+     * was made with.
+     *
+     * @param source  the downloaded file, or a folder holding exactly one file the provider recognises.
+     * @param replace whether a different credentials file already in place may be overwritten, which can't be undone.
+     * @return what was done, for the command to report. Never {@code null}.
+     * @throws CredentialImportException if {@code source} can't be used, for a reason the user can fix.
+     * @throws SyncException             if the credentials file in place could not be read or written.
+     */
+    @NotNull CredentialImportResult importCredentials(@NotNull Path source, boolean replace) throws SyncException;
+
+    /**
      * Returns the errors from checks that can't throw, such as {@link #isLoggedIn()}, and clears them, so a second
      * call only returns errors raised since the first.
      *
@@ -93,8 +120,8 @@ public interface RemoteStore {
      * This is the only method allowed to open a browser or otherwise involve the user.
      *
      * @throws MissingCredentialsException if the client credentials are not in {@link #secureFilesPath()}.
-     * @throws SyncException               if the client credentials are invalid, the user declines access, or the
-     *                                     flow fails.
+     * @throws SyncException               if a stored credential exists but can't be read, the client credentials
+     *                                     are invalid, the user declines access, or the flow fails.
      */
     void login() throws SyncException;
 
@@ -102,18 +129,21 @@ public interface RemoteStore {
      * Revokes the stored credential with the remote, then deletes it locally from {@link #tokensPath()}.
      * The revoke comes first so that any copy of the credential made before deletion stops working too, and the
      * local credential is kept if the revoke fails. A credential the remote reports as already invalid counts as
-     * revoked. The client credentials are never deleted. Does nothing if no credential is stored.
+     * revoked. The client credentials are never deleted. If no credential is stored, nothing is revoked, but an
+     * empty {@link #tokensPath()} folder is still deleted. A stored credential that holds no token is deleted without
+     * contacting the remote.
      *
+     * @return what was done, for the command to report. Never {@code null}.
      * @throws SyncException if the credential could not be revoked, for example while offline, or could not be
      *                       deleted after being revoked.
      */
-    void logout() throws SyncException;
+    LogoutResult logout() throws SyncException;
 
     /**
      * Checks whether a credential stored by {@link #login()} is present locally. The client credentials are not
      * checked, a missing or invalid client credentials file is reported by the operations that need it.
      * <p>
-     * This is a local check only, it never contacts the remote, starts the authentication flow or creates any folders.
+     * This is a local check only, it never contacts the remote, starts the authentication flow or writes anything.
      * A stored credential that has expired or been revoked remotely still counts as logged in, until the next
      * {@link #fetch()} or {@link #upload(String)} fails with a {@link SyncAuthenticationException}.
      * <p>

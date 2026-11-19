@@ -145,7 +145,7 @@ public final class Configuration {
      */
     private void loadDefaults() {
         for (ConfigOption option : ConfigOption.values()) {
-            
+
             setDefaultConfig(option);
         }
     }
@@ -265,7 +265,7 @@ public final class Configuration {
         }
 
         if (savingBlocked) {
-            UserNotification.notifyUserOfError("Configs were not saved because the config file could not be read. "
+            UserNotification.notifyFailure("Configs were not saved because the config file could not be read. "
                     + "Fix or remove it and try again");
 
             return;
@@ -278,7 +278,7 @@ public final class Configuration {
             String message = ExceptionUtil.describeIOFailure(e, "Unable to save configs because {}",
                     "Unexpected error occurred while saving configs");
 
-            UserNotification.notifyUserOfError(message);
+            UserNotification.notifyFailure(message);
 
             logger.error(message, e);
         }

@@ -11,14 +11,16 @@ public enum SyncProvider {
     /**
      * Google Drive, through {@link io.druidlabs.dotfiles.sync.gdrive.GoogleDriveRemoteStore}.
      */
-    GOOGLE_DRIVE("GDrive", "Google Drive");
+    GOOGLE_DRIVE("GDrive", "Google Drive", "https://myaccount.google.com/permissions");
 
     private final String id;
     private final String name;
+    private final String permissionsUrl;
 
-    SyncProvider(@NotNull String id, @NotNull String name) {
+    SyncProvider(@NotNull String id, @NotNull String name, @NotNull String permissionsUrl) {
         this.id = id;
         this.name = name;
+        this.permissionsUrl = permissionsUrl;
     }
 
     /**
@@ -55,8 +57,16 @@ public enum SyncProvider {
         return name;
     }
 
+    /**
+     * @return the page where the user can revoke the app's access by hand, for when {@code logout --force} deletes
+     * the local credential without revoking it.
+     */
+    public String getPermissionsUrl() {
+        return permissionsUrl;
+    }
+
     @Override
     public String toString() {
         return id;
     }
-}   
+}

@@ -20,7 +20,7 @@ public final class UserNotification {
      *
      * @param message the message.
      */
-    public static void notifyUser(String message) {
+    public static void notify(String message) {
         logger.info(message);
     }
 
@@ -30,7 +30,7 @@ public final class UserNotification {
      * @param placeholder the message, with {@code {}} placeholders for {@code args}.
      * @param args        the values for the placeholders.
      */
-    public static void notifyUser(String placeholder, Object... args) {
+    public static void notify(String placeholder, Object... args) {
         logger.info(placeholder, args);
     }
 
@@ -39,7 +39,7 @@ public final class UserNotification {
      *
      * @param errorMessage the message.
      */
-    public static void notifyUserOfError(String errorMessage) {
+    public static void notifyFailure(String errorMessage) {
         logger.error(errorMessage);
     }
 
@@ -49,7 +49,7 @@ public final class UserNotification {
      * @param placeholder the message, with {@code {}} placeholders for {@code args}.
      * @param args        the values for the placeholders.
      */
-    public static void notifyUserOfError(String placeholder, Object... args) {
+    public static void notifyFailure(String placeholder, Object... args) {
         logger.error(placeholder, args);
     }
 

@@ -13,6 +13,8 @@ import io.druidlabs.dotfiles.commands.RemoveEntryCommand;
 import io.druidlabs.dotfiles.commands.UpdateEntryCommand;
 import io.druidlabs.dotfiles.commands.ViewCommand;
 import io.druidlabs.dotfiles.commands.sync.LoginCommand;
+import io.druidlabs.dotfiles.commands.sync.LogoutCommand;
+import io.druidlabs.dotfiles.commands.sync.StatusCommand;
 import io.druidlabs.dotfiles.constants.FilePaths;
 import io.druidlabs.dotfiles.util.ManifestVersionProvider;
 import io.druidlabs.dotfiles.util.UserNotification;
@@ -38,7 +40,9 @@ import picocli.CommandLine.Option;
                 PlaceCommand.class,
                 LogCommand.class,
                 ConfigCommand.class,
-                LoginCommand.class
+                LoginCommand.class,
+                LogoutCommand.class,
+                StatusCommand.class
         }
 )
 public class Main implements Runnable {
@@ -80,7 +84,7 @@ public class Main implements Runnable {
 
             exitCode = CommandLine.ExitCode.SOFTWARE;
 
-            UserNotification.notifyUserOfError("Unexpected error occurred");
+            UserNotification.notifyFailure("Unexpected error occurred");
 
             Logger unhandledExceptionLogger = LoggerFactory.getLogger("UnhandledExceptionReporter");
 

@@ -26,17 +26,17 @@ public final class ViewCommand extends CommandAction {
         var dotfile = Worker.getDotfile(k);
 
         if (dotfile == null) {
-            UserNotification.notifyUser("File with key '{}' not found", k);
+            UserNotification.notify("File with key '{}' not found", k);
 
             return ExitCode.OK;
         }
 
         LOGGER.debug("Viewing dotfile with key '{}'", k);
 
-        UserNotification.notifyUser(formatData("Key", "File location"));
-        UserNotification.notifyUser(formatData(dotfile.getKey(), dotfile.getPathToFile()));
-        UserNotification.notifyUser("--------------");
-        UserNotification.notifyUser(dotfile.getFileContents());
+        UserNotification.notify(formatData("Key", "File location"));
+        UserNotification.notify(formatData(dotfile.getKey(), dotfile.getPathToFile()));
+        UserNotification.notify("--------------");
+        UserNotification.notify(dotfile.getFileContents());
 
         return ExitCode.OK;
     }

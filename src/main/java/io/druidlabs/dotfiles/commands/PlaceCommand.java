@@ -35,7 +35,7 @@ public final class PlaceCommand extends CommandAction {
     @Override
     public Integer call() {
         if (targetKey == null || targetKey.isBlank()) {
-            UserNotification.notifyUserOfError("I cannot identify file to place without its key");
+            UserNotification.notifyFailure("I cannot identify file to place without its key");
 
             return ExitCode.USAGE;
         }
@@ -45,7 +45,7 @@ public final class PlaceCommand extends CommandAction {
         var dotfile = Worker.getDotfile(key);
 
         if (dotfile == null) {
-            UserNotification.notifyUserOfError("File with key '{}' not found", key);
+            UserNotification.notifyFailure("File with key '{}' not found", key);
 
             return ExitCode.USAGE;
         }
@@ -64,9 +64,9 @@ public final class PlaceCommand extends CommandAction {
         }
 
         if (!confirm(question)) {
-            UserNotification.notifyUser("Place operation cancelled");
+            UserNotification.notify("Place operation cancelled");
 
-            UserNotification.notifyUser("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
+            UserNotification.notify("Hint: Run 'dotfiles update {}' to update the contents of this file and then you can safely overwrite",
                     dotfile.getKey());
 
             return ExitCode.OK;
@@ -86,7 +86,7 @@ public final class PlaceCommand extends CommandAction {
             String message = ExceptionUtil.describeIOFailure(e, "Oof tough luck, something bad happened while placing file: {}",
                     "Oof tough luck, something bad happened while placing file");
 
-            UserNotification.notifyUserOfError(message);
+            UserNotification.notifyFailure(message);
 
             String logMessage = interpolate("Error placing dotfile with key '{}' at '{}'", dotfile.getKey(), filePath);
 

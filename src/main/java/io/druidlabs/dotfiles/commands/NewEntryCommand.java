@@ -36,14 +36,14 @@ public final class NewEntryCommand extends CommandAction {
         String sanitisedKey = sanitiseKey(key);
 
         if (sanitisedKey.isBlank()) {
-            UserNotification.notifyUser("Key cannot be blank or empty");
+            UserNotification.notifyFailure("Key cannot be blank or empty");
 
             return ExitCode.USAGE;
         }
 
         if (isExistingKey(sanitisedKey)) {
-            UserNotification.notifyUser("Dotfile with key '{}' already exists", sanitisedKey);
-            UserNotification.notifyUser("Use 'dotfiles update {}' to update that dotfile instead", sanitisedKey);
+            UserNotification.notifyFailure("Dotfile with key '{}' already exists", sanitisedKey);
+            UserNotification.notifyFailure("Use 'dotfiles update {}' to update that dotfile instead", sanitisedKey);
 
             return ExitCode.USAGE;
         }
@@ -56,7 +56,7 @@ public final class NewEntryCommand extends CommandAction {
                 fileToRead = getFilePathToRead();
 
             } catch (CommandUsageException e) {
-                UserNotification.notifyUserOfError(e.getMessage());
+                UserNotification.notifyFailure(e.getMessage());
 
                 return ExitCode.USAGE;
             }
@@ -69,7 +69,7 @@ public final class NewEntryCommand extends CommandAction {
             } catch (IOException e) {
                 String message = ExceptionUtil.describeIOFailure(e, "Failed to read target file because {}", "Failed to read target file");
 
-                notifyAndLogErrorWithException(message, e);
+                notifyAndLogFailureWithException(message, e);
 
                 return ExitCode.SOFTWARE;
             }
@@ -86,7 +86,7 @@ public final class NewEntryCommand extends CommandAction {
             notifyAndLog("Successfully added new file with key '{}'", dotfile.getKey());
 
         } catch (BlankValueException e) {
-            UserNotification.notifyUserOfError("You left something blank: {}", e.getMessage());
+            UserNotification.notifyFailure("You left something blank: {}", e.getMessage());
 
             LOGGER.error("Error adding dotfile: ", e);
 

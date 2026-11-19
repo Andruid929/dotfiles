@@ -99,7 +99,7 @@ public abstract class CommandAction implements Callable<Integer> {
      * @param args    the values for the placeholders.
      */
     protected final void notifyAndLog(String message, Object... args) {
-        UserNotification.notifyUser(message, args);
+        UserNotification.notify(message, args);
         LOGGER.info(message, args);
     }
 
@@ -109,8 +109,8 @@ public abstract class CommandAction implements Callable<Integer> {
      * @param errorMessage the message, with {@code {}} placeholders for {@code args}.
      * @param args         the values for the placeholders.
      */
-    protected final void notifyAndLogError(String errorMessage, Object... args) {
-        UserNotification.notifyUserOfError(errorMessage, args);
+    protected final void notifyAndLogFailure(String errorMessage, Object... args) {
+        UserNotification.notifyFailure(errorMessage, args);
         LOGGER.error(errorMessage, args);
     }
 
@@ -122,8 +122,8 @@ public abstract class CommandAction implements Callable<Integer> {
      * @param e            the exception to log.
      * @param args         the values for the placeholders.
      */
-    protected final void notifyAndLogErrorWithException(String errorMessage, Exception e, Object... args) {
-        UserNotification.notifyUserOfError(errorMessage, args);
+    protected final void notifyAndLogFailureWithException(String errorMessage, Exception e, Object... args) {
+        UserNotification.notifyFailure(errorMessage, args);
 
         String logMessage = interpolate(errorMessage, args);
 

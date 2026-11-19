@@ -27,6 +27,12 @@ public final class CredentialLoader {
      */
     public static final String CREDENTIALS_FILENAME = "credentials.json";
 
+    /**
+     * The guide to creating the client credentials, linked from the missing-file message. It only resolves once the
+     * guide is on {@code master}, and builds already released keep printing it, so don't rename or move the guide.
+     */
+    public static final String SETUP_GUIDE_URL = "https://github.com/Andruid929/dotfiles/blob/master/docs/google-drive-setup.md";
+
     private CredentialLoader() {
         //Utility classes cannot be instantiated
     }
@@ -42,8 +48,8 @@ public final class CredentialLoader {
         Path credentialsJsonPath = gDriveFolderPath.resolve(CREDENTIALS_FILENAME);
 
         if (Files.notExists(credentialsJsonPath)) {
-            String message = interpolate("Credentials file '{}' not found. Refer to the documentation to see how to acquire this",
-                    credentialsJsonPath);
+            String message = interpolate("Credentials file '{}' not found. Create a Desktop app OAuth client for the Google Drive API, then add its downloaded file with 'dotfiles login --credentials <path>'{}Setup guide: {}",
+                    credentialsJsonPath, System.lineSeparator(), SETUP_GUIDE_URL);
 
             throw new MissingCredentialsException(message);
         }
@@ -60,6 +66,17 @@ public final class CredentialLoader {
             throw new SyncException(message, e);
         }
 
+        return parse(contents);
+    }
+
+    /**
+     * Checks the contents of a client credentials file, wherever it was read from.
+     *
+     * @param contents the file's contents.
+     * @return the parsed client secrets, which always hold an {@code installed} (desktop client) section.
+     * @throws SyncException if the contents are not valid JSON, or not a desktop OAuth client file.
+     */
+    public static @NotNull GoogleClientSecrets parse(@NotNull String contents) throws SyncException {
         JsonFactory factory = GoogleDriveRemoteStore.GSON_FACTORY;
 
         GoogleClientSecrets secrets;

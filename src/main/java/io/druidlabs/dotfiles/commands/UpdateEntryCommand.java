@@ -42,13 +42,13 @@ public final class UpdateEntryCommand extends CommandAction {
     public Integer call() {
 
         if (targetKey.isBlank()) {
-            UserNotification.notifyUser("Key cannot be blank");
+            UserNotification.notifyFailure("Key cannot be blank");
 
             return ExitCode.USAGE;
         }
 
         if (isNoOp()) {
-            UserNotification.notifyUser("Nothing to do");
+            UserNotification.notifyFailure("Nothing to do");
 
             return ExitCode.USAGE;
         }
@@ -58,7 +58,7 @@ public final class UpdateEntryCommand extends CommandAction {
         Dotfile dotfile = Worker.getDotfile(key);
 
         if (dotfile == null) {
-            UserNotification.notifyUser("Dotfile with key '{}' not found", key);
+            UserNotification.notifyFailure("Dotfile with key '{}' not found", key);
 
             return ExitCode.USAGE;
         }
@@ -70,18 +70,18 @@ public final class UpdateEntryCommand extends CommandAction {
             k = sanitiseKey(newKey);
 
             if (k.isBlank()) {
-                UserNotification.notifyUser("New key cannot be blank");
+                UserNotification.notifyFailure("New key cannot be blank");
 
                 return ExitCode.USAGE;
             }
 
             if (k.equalsIgnoreCase(key)) {
-                UserNotification.notifyUser("Key already set to '{}'", k);
+                UserNotification.notify("Key already set to '{}'", k);
 
                 k = null;
 
             } else if (Worker.getDotfile(k) != null) {
-                UserNotification.notifyUser("Dotfile key '{}' already exists", k);
+                UserNotification.notifyFailure("Dotfile key '{}' already exists", k);
 
                 return ExitCode.USAGE;
             }
@@ -92,20 +92,20 @@ public final class UpdateEntryCommand extends CommandAction {
                 pathParts = PathUtil.getPathAndFile(Path.of(sanitise(pathString)));
 
             } catch (IllegalArgumentException e) {
-                UserNotification.notifyUserOfError(e.getMessage());
+                UserNotification.notifyFailure(e.getMessage());
 
                 return ExitCode.USAGE;
             }
 
             if (Path.of(pathParts[0], pathParts[1]).equals(dotfile.getPathToFile())) {
-                UserNotification.notifyUser("Path already set to '{}'", dotfile.getPathToFile());
+                UserNotification.notify("Path already set to '{}'", dotfile.getPathToFile());
 
                 pathParts = null;
             }
         }
 
         if (doNotRead && k == null && pathParts == null) {
-            UserNotification.notifyUser("Nothing to change");
+            UserNotification.notifyFailure("Nothing to change");
 
             return ExitCode.USAGE;
         }
@@ -122,7 +122,7 @@ public final class UpdateEntryCommand extends CommandAction {
                     contents = readContents(fileToRead);
 
                 } catch (BlankValueException e) {
-                    UserNotification.notifyUserOfError("{}, cannot update dotfile", e.getMessage());
+                    UserNotification.notifyFailure("{}, cannot update dotfile", e.getMessage());
 
                     return ExitCode.USAGE;
 
@@ -130,13 +130,13 @@ public final class UpdateEntryCommand extends CommandAction {
                     String message = ExceptionUtil.describeIOFailure(e, "Failed to update contents: {}",
                             "Failed to update contents, IO error occurred");
 
-                    notifyAndLogErrorWithException(message, e);
+                    notifyAndLogFailureWithException(message, e);
 
                     return ExitCode.SOFTWARE;
                 }
 
             } else {
-                UserNotification.notifyUser("Update cancelled, nothing was changed");
+                UserNotification.notify("Update cancelled, nothing was changed");
 
                 return ExitCode.OK;
             }

@@ -2,17 +2,24 @@ package io.druidlabs.dotfiles.sync;
 
 import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
+import io.druidlabs.dotfiles.Dotfile;
 import io.druidlabs.dotfiles.Worker;
 import io.druidlabs.dotfiles.config.ConfigOption;
 import io.druidlabs.dotfiles.config.Configuration;
 import io.druidlabs.dotfiles.sync.exceptions.MissingSyncProviderException;
 import io.druidlabs.dotfiles.sync.gdrive.GoogleDriveRemoteStore;
+import io.druidlabs.dotfiles.transformer.HashHandler;
 
 /**
- * Picks the {@link RemoteStore} for the sync provider set in the config. Unlike {@link Worker}, this holds no state:
- * each call builds a new store.
+ * Picks the {@link RemoteStore} for the sync provider set in the config, and takes the snapshots sync compares
+ * against. Unlike {@link Worker}, this holds no state: each call builds a new store.
  */
 public final class SyncWorker {
 
@@ -49,5 +56,23 @@ public final class SyncWorker {
         return switch (provider) {
             case GOOGLE_DRIVE -> new GoogleDriveRemoteStore();
         };
+    }
+
+    /**
+     * Takes a snapshot of the dotfiles, to save as {@code .sync} once a sync succeeds or to compare with the saved one.
+     *
+     * @param dotfiles the dotfiles, local or parsed from the remote file.
+     * @param store    the store being synced with, whose provider the snapshot records.
+     * @return a new snapshot of the dotfiles.
+     * @throws JsonProcessingException if the dotfiles could not be serialised.
+     */
+    @Contract("_,_ -> new")
+    public static @NotNull SyncSnapshot computeSnapshot(@NotNull Collection<Dotfile> dotfiles, @NotNull RemoteStore store)
+            throws JsonProcessingException {
+        String dotfilesHash = HashHandler.hashDotfiles(dotfiles);
+
+        SyncProvider syncProvider = store.getSyncProvider();
+
+        return new SyncSnapshot(syncProvider.getId(), dotfilesHash);
     }
 }

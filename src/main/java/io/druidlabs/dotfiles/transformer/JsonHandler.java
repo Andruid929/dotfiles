@@ -10,7 +10,10 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import io.druidlabs.dotfiles.Dotfile;
@@ -28,15 +31,14 @@ public final class JsonHandler {
     };
 
     /**
-     * The shared mapper: indented output, dates as ISO strings rather than timestamps, unknown properties ignored,
-     * and the source included in parse error locations.
+     * The shared mapper: compact output (on one line), dates as ISO strings rather than timestamps, unknown
+     * properties ignored, and the source included in parse error locations.
      */
     private static final JsonMapper mapper;
 
     static {
         mapper = JsonMapper.builder()
                 .addModule(new JavaTimeModule())
-                .enable(SerializationFeature.INDENT_OUTPUT)
                 .enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION)
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
@@ -55,12 +57,29 @@ public final class JsonHandler {
     }
 
     /**
-     * @param setOfDotfiles the dotfiles to serialise.
-     * @return the dotfiles as an indented JSON array.
+     * @param collectionOfDotfiles the dotfiles to serialise.
+     * @return the dotfiles as a compact JSON array, in the collection's iteration order.
      * @throws JsonProcessingException if they could not be serialised.
      */
-    public static String serialiseToJsonString(Set<Dotfile> setOfDotfiles) throws JsonProcessingException {
-        return mapper.writeValueAsString(setOfDotfiles);
+    public static String serialiseToJsonString(Collection<Dotfile> collectionOfDotfiles) throws JsonProcessingException {
+        return mapper.writeValueAsString(collectionOfDotfiles);
+    }
+
+    /**
+     * Serialises the dotfiles in their canonical form: sorted by key, so the same dotfiles always give the same string
+     * whatever order they came in. Sync hashes this form, so any change to it (the mapper's settings, or the
+     * properties {@link Dotfile} serialises) changes every hash and makes the next sync report a conflict.
+     *
+     * @param dotfiles the dotfiles to serialise.
+     * @return the dotfiles as a compact JSON array, sorted by key.
+     * @throws JsonProcessingException if they could not be serialised.
+     */
+    public static String canonicalSerialiseToJsonString(@NotNull Collection<Dotfile> dotfiles) throws JsonProcessingException {
+        List<Dotfile> sortedByKey = dotfiles.stream()
+                .sorted(Comparator.comparing(Dotfile::getKey))
+                .toList();
+
+        return serialiseToJsonString(sortedByKey);
     }
 
     /**

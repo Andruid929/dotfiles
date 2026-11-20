@@ -30,6 +30,11 @@ public final class Names {
      */
     public static final String CONFIG_FILENAME = ".config";
 
+    /**
+     * The name of the sync snapshot file.
+     */
+    public static final String SYNC_SNAPSHOT_FILENAME = ".sync";
+
     private Names() {
         //Utility classes cannot be instantiated
     }

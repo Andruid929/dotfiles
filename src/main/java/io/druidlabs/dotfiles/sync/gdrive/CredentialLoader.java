@@ -84,7 +84,7 @@ public final class CredentialLoader {
         try {
             secrets = GoogleClientSecrets.load(factory, new StringReader(contents));
 
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             throw new SyncException("Credentials file has invalid JSON", e);
         }
 

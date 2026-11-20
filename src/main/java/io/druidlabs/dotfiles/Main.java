@@ -1,5 +1,6 @@
 package io.druidlabs.dotfiles;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,8 @@ import io.druidlabs.dotfiles.util.ManifestVersionProvider;
 import io.druidlabs.dotfiles.util.UserNotification;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import picocli.CommandLine.ExitCode;
+import picocli.CommandLine.IExecutionExceptionHandler;
 import picocli.CommandLine.Option;
 
 /**
@@ -72,26 +75,51 @@ public class Main implements Runnable {
      * @param args command-line arguments.
      */
     static void main(String[] args) {
+        Logger unhandledExceptionLogger = LoggerFactory.getLogger("UnhandledExceptionReporter");
+
         int exitCode;
 
         try {
             Worker.start();
 
-            exitCode = new CommandLine(new Main()).execute(args);
+            IExecutionExceptionHandler exceptionHandler = executionExceptionHandler(unhandledExceptionLogger);
+
+            var commandLine = new CommandLine(new Main())
+                    .setExecutionExceptionHandler(exceptionHandler);
+
+            exitCode = commandLine.execute(args);
 
             Worker.dismiss();
-        } catch (Exception e) {
 
-            exitCode = CommandLine.ExitCode.SOFTWARE;
+        } catch (Exception e) {
+            exitCode = ExitCode.SOFTWARE;
 
             UserNotification.notifyFailure("Unexpected error occurred");
-
-            Logger unhandledExceptionLogger = LoggerFactory.getLogger("UnhandledExceptionReporter");
 
             unhandledExceptionLogger.error("Unhandled exception thrown", e);
         }
 
         System.exit(exitCode);
+    }
+
+    /**
+     * Builds the handler for exceptions a command doesn't catch itself. picocli's {@code execute()} catches those (and
+     * anything a handler rethrows), so they never reach {@code main}'s {@code catch}. The handler disables saving,
+     * since the command may have left its changes half done, reports the error and logs it.
+     *
+     * @param unhandledExceptionLogger the logger the exception is written to.
+     * @return the handler, which always returns {@link ExitCode#SOFTWARE}.
+     */
+    private static @NotNull IExecutionExceptionHandler executionExceptionHandler(Logger unhandledExceptionLogger) {
+        return (e, _, _) -> {
+            Worker.disableSaving();
+
+            UserNotification.notifyFailure("Unexpected error occurred");
+
+            unhandledExceptionLogger.error("Unhandled exception thrown", e);
+
+            return ExitCode.SOFTWARE;
+        };
     }
 
     /**

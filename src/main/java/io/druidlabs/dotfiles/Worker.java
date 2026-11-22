@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.druidlabs.dotfiles.config.Configuration;
+import io.druidlabs.dotfiles.exceptions.DuplicateKeysException;
 import io.druidlabs.dotfiles.io.IOTasks;
 import io.druidlabs.dotfiles.persistence.JsonPersistence;
 import io.druidlabs.dotfiles.persistence.Persistence;
@@ -116,6 +117,9 @@ public final class Worker {
                 UserNotification.notifyFailure(message);
 
                 System.exit(CommandLine.ExitCode.SOFTWARE);
+
+            } else if (ioe instanceof DuplicateKeysException dke) {
+                message = interpolate("Failed to process saved dotfiles. {}", dke.getMessage());
 
             } else if (ioe instanceof JsonProcessingException) {
                 message = "Failed to process saved dotfiles";

@@ -2,6 +2,7 @@ package io.druidlabs.dotfiles.transformer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -11,9 +12,11 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import io.druidlabs.dotfiles.Dotfile;
+import io.druidlabs.dotfiles.exceptions.DuplicateKeysException;
 import io.github.andruid929.leutils.wora.PathFinder;
 
 class JsonHandlerTest {
@@ -137,6 +140,103 @@ class JsonHandlerTest {
     void deserialise_withKeyMissingAfterHandEdit_shouldThrowJsonProcessingException() {
         String jsonString = """
                 [{"fileContents": "set number", "filePath": "~", "filename": ".vimrc"}]
+                """;
+
+        assertThrows(JsonProcessingException.class, () -> JsonHandler.deserialiseToSet(jsonString));
+    }
+
+    /**
+     * Builds before 2026-07-28 kept keys as typed, so their {@code .files} could hold {@code Bashrc} and
+     * {@code bashrc} as two dotfiles. Keys are now lower-cased, which makes them the same key.
+     */
+    @Test
+    void deserialise_ofEarlyV1FileWithKeysDifferingInCase_shouldNameTheKey() {
+        String jsonString = """
+                [ {
+                  "key" : "Bashrc",
+                  "fileContents" : "alias ll='ls -l'",
+                  "filePath" : "~",
+                  "filename" : ".bashrc"
+                }, {
+                  "key" : "bashrc",
+                  "fileContents" : "export EDITOR=vim",
+                  "filePath" : "~/backup",
+                  "filename" : ".bashrc"
+                } ]
+                """;
+
+        var e = assertThrows(DuplicateKeysException.class, () -> JsonHandler.deserialiseToSet(jsonString));
+
+        assertEquals(List.of("bashrc"), e.getDuplicateKeys());
+        assertTrue(e.getMessage().contains("bashrc"), e.getMessage());
+    }
+
+    @Test
+    void deserialise_withEntryCopiedAndKeyLeftUnchanged_shouldThrow() {
+        String jsonString = """
+                [{"key": "vimrc", "fileContents": "set number", "filePath": "~", "filename": ".vimrc"},
+                 {"key": "vimrc", "fileContents": "set number", "filePath": "~/.config/nvim", "filename": "init.vim"}]
+                """;
+
+        var e = assertThrows(DuplicateKeysException.class, () -> JsonHandler.deserialiseToSet(jsonString));
+
+        assertEquals(List.of("vimrc"), e.getDuplicateKeys());
+    }
+
+    /**
+     * Three machines' {@code .files} pasted into one array, each with its own {@code bashrc}.
+     */
+    @Test
+    void deserialise_ofFilesMergedByHand_shouldNameEachDuplicateOnce() {
+        String jsonString = """
+                [{"key": "bashrc", "fileContents": "laptop", "filePath": "~", "filename": ".bashrc"},
+                 {"key": "vimrc", "fileContents": "laptop", "filePath": "~", "filename": ".vimrc"},
+                 {"key": "bashrc", "fileContents": "desktop", "filePath": "~", "filename": ".bashrc"},
+                 {"key": "vimrc", "fileContents": "desktop", "filePath": "~", "filename": ".vimrc"},
+                 {"key": "tmux", "fileContents": "desktop", "filePath": "~", "filename": ".tmux.conf"},
+                 {"key": "bashrc", "fileContents": "server", "filePath": "~", "filename": ".bashrc"}]
+                """;
+
+        var e = assertThrows(DuplicateKeysException.class, () -> JsonHandler.deserialiseToSet(jsonString));
+
+        assertEquals(2, e.getDuplicateKeys().size(), e.getDuplicateKeys().toString());
+        assertEquals(Set.of("bashrc", "vimrc"), Set.copyOf(e.getDuplicateKeys()));
+    }
+
+    /**
+     * Duplicates are by key, so dotfiles that share a filename in different folders are fine.
+     */
+    @Test
+    void deserialise_withSameFilenameInDifferentFolders_shouldLoad() throws JsonProcessingException {
+        String jsonString = """
+                [{"key": "nvim", "fileContents": "vim.opt.number = true", "filePath": "~/.config/nvim", "filename": "init.lua"},
+                 {"key": "lvim", "fileContents": "lvim.colorscheme = 'tokyonight'", "filePath": "~/.config/lvim", "filename": "init.lua"}]
+                """;
+
+        assertEquals(2, JsonHandler.deserialiseToSet(jsonString).size());
+    }
+
+    /**
+     * A {@code null} left where an entry was removed. It used to load as a {@code null} dotfile and fail later,
+     * outside {@code Worker.start()}'s handling.
+     */
+    @Test
+    void deserialise_withNullLeftByHandEdit_shouldThrowJsonProcessingException() {
+        String jsonString = """
+                [{"key": "vimrc", "fileContents": "set number", "filePath": "~", "filename": ".vimrc"}, null]
+                """;
+
+        assertThrows(JsonProcessingException.class, () -> JsonHandler.deserialiseToSet(jsonString));
+    }
+
+    /**
+     * Two {@code null}s used to throw a {@link NullPointerException} while looking for duplicates, which ends in
+     * "Unexpected error occurred" rather than the message for a bad file.
+     */
+    @Test
+    void deserialise_withTwoNullsLeftByHandEdit_shouldThrowJsonProcessingException() {
+        String jsonString = """
+                [null, {"key": "vimrc", "fileContents": "set number", "filePath": "~", "filename": ".vimrc"}, null]
                 """;
 
         assertThrows(JsonProcessingException.class, () -> JsonHandler.deserialiseToSet(jsonString));

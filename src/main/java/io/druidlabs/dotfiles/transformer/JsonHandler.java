@@ -12,11 +12,12 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import io.druidlabs.dotfiles.Dotfile;
+import io.druidlabs.dotfiles.exceptions.DuplicateKeysException;
+import io.druidlabs.dotfiles.util.DotfilesUtil;
 
 /**
  * Utility class for converting between Dotfile objects and JSON strings.
@@ -25,9 +26,10 @@ import io.druidlabs.dotfiles.Dotfile;
 public final class JsonHandler {
 
     /**
-     * The Jackson type for reading a set of dotfiles.
+     * The Jackson type for reading a list of dotfiles. Dotfiles are read as a list, not a set, so duplicate keys can
+     * still be found.
      */
-    public static final TypeReference<Set<Dotfile>> DOT_FILES_TYPE = new TypeReference<>() {
+    public static final TypeReference<List<Dotfile>> DOT_FILES_LIST_TYPE = new TypeReference<>() {
     };
 
     /**
@@ -83,15 +85,19 @@ public final class JsonHandler {
     }
 
     /**
+     * Reads a JSON array of dotfiles, checked with {@link DotfilesUtil#validateDotfiles(List)}. The array is read as a
+     * list first, since reading it straight into a set would keep only one dotfile per key and hide the duplicates.
+     *
      * @param jsonString a JSON array of dotfiles.
      * @return a new, mutable set of the dotfiles.
+     * @throws DuplicateKeysException  if more than one dotfile has the same key.
      * @throws JsonProcessingException if {@code jsonString} is not a valid array of dotfiles, including when a
-     *                                 dotfile has a blank key or blank contents.
+     *                                 dotfile has a blank key or blank contents, or an entry is {@code null}.
      */
     public static @NotNull Set<Dotfile> deserialiseToSet(@NotNull String jsonString) throws JsonProcessingException {
-        Set<Dotfile> savedDotfiles = mapper.readValue(jsonString, DOT_FILES_TYPE);
+        List<Dotfile> dotfiles = mapper.readValue(jsonString, DOT_FILES_LIST_TYPE);
 
-        return new HashSet<>(savedDotfiles);
+        return DotfilesUtil.validateDotfiles(dotfiles);
     }
 
     /**

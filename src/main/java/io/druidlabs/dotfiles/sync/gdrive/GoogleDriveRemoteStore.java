@@ -46,8 +46,8 @@ import io.druidlabs.dotfiles.sync.SyncProvider;
 import io.druidlabs.dotfiles.sync.exceptions.MissingCredentialsException;
 import io.druidlabs.dotfiles.sync.exceptions.SyncException;
 import io.druidlabs.dotfiles.util.ExceptionUtil;
-import io.druidlabs.dotfiles.util.OSUtil;
 import io.druidlabs.dotfiles.util.UserNotification;
+import io.github.andruid929.leutils.wora.OperatingSystem;
 
 /**
  * {@link RemoteStore} backed by Google Drive, using the {@code drive.file} scope so the app only sees files it created.
@@ -196,7 +196,8 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
      * Replaces the OAuth library's default browser, which starts the browser with this process's output streams, so
      * the browser's own logs printed into the app's output and an IDE run didn't end until the browser was closed.
      * This one prints the authorisation URL first, then starts the system opener ({@code rundll32} on Windows,
-     * {@code open} on macOS, {@code xdg-open} elsewhere) with its output discarded and without waiting for it.
+     * {@code open} on macOS, {@code xdg-open} elsewhere, including systems {@link OperatingSystem} doesn't recognise)
+     * with its output discarded and without waiting for it.
      * <p>
      * Failing to start the opener is only logged, since the user can still open the printed URL themselves and
      * {@link AuthorizationCodeInstalledApp#authorize(String)} keeps waiting for the redirect either way.
@@ -210,10 +211,10 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
             UserNotification.notify("If the browser does not automatically open, visit {}",
                     url);
 
-            ProcessBuilder commandRunner = switch (OSUtil.getCurrentOS()) {
+            ProcessBuilder commandRunner = switch (OperatingSystem.current()) {
                 case WINDOWS -> new ProcessBuilder("rundll32", "url.dll,FileProtocolHandler", url);
                 case MAC_OS -> new ProcessBuilder("open", url);
-                default -> new ProcessBuilder("xdg-open", url);
+                case null, default -> new ProcessBuilder("xdg-open", url);
             };
 
             commandRunner.redirectOutput(ProcessBuilder.Redirect.DISCARD);
@@ -307,21 +308,31 @@ public final class GoogleDriveRemoteStore implements RemoteStore {
                     .authorize(USER_ID);
 
         } catch (IOException e) {
-            String message;
-
-            if (e instanceof UnknownHostException || e instanceof ConnectException) {
-                message = "Failed to authorise login because you are offline. Try again once you are connected";
-
-            } else if (e instanceof SocketTimeoutException) {
-                message = "Failed to authorise login, you are on a slow network. Try again later";
-
-            } else {
-                message = ExceptionUtil.describeIOFailure(e,
-                        "Failed to authorise login because {}",
-                        "Failed to authorise login");
-            }
+            String message = getLoginErrorMessage(e);
 
             throw new SyncException(message, e);
+        }
+    }
+
+    /**
+     * Turns a failure while waiting for or completing the login into a message for the user. The token exchange that
+     * follows the user's approval is the only request to Google here, so an unreachable or refused host means they
+     * are offline and a timeout means the network is too slow.
+     *
+     * @param e the failure from {@link AuthorizationCodeInstalledApp#authorize(String)}.
+     * @return the message to show the user.
+     */
+    private static @NotNull String getLoginErrorMessage(IOException e) {
+        if (e instanceof UnknownHostException || e instanceof ConnectException) {
+            return "Failed to authorise login because you are offline. Try again once you are connected";
+
+        } else if (e instanceof SocketTimeoutException) {
+            return "Failed to authorise login, you are on a slow network. Try again later";
+
+        } else {
+            return ExceptionUtil.describeIOFailure(e,
+                    "Failed to authorise login because {}",
+                    "Failed to authorise login");
         }
     }
 

@@ -20,8 +20,11 @@ public final class FilePaths {
 
     /**
      * The folder for sync credentials, with one subfolder per provider. It is in the local app data folder
-     * ({@code AppData\Local} on Windows, so it never roams), outside {@link #APP_FOLDER_DIR} so {@code purge} never
-     * deletes it.
+     * ({@code LOCALAPPDATA} on Windows, so it never roams, {@code ~/Library/Application Support} on macOS and
+     * {@code ~/.config} elsewhere), outside {@link #APP_FOLDER_DIR} so {@code purge} never deletes it.
+     * <p>
+     * Moving it would make every stored login and {@code credentials.json} look missing, so users would have to set
+     * sync up again.
      */
     public static final Path SYNC_SECURE_DIR = syncDirPath();
 
@@ -44,19 +47,11 @@ public final class FilePaths {
     }
 
     /**
-     * @return where {@link #SYNC_SECURE_DIR} lives on this OS.
+     * @return where {@link #SYNC_SECURE_DIR} lives on this OS, from {@link PathFinder#getLocalAppDataFolder()}.
      */
     @NotNull
     private static Path syncDirPath() {
-        String osName = System.getProperty("os.name");
-
-        if (osName.toLowerCase().contains("win")) {
-            Path localAppDataDir = PathFinder.createPathFromHomeRoot("AppData", "Local");
-
-            return localAppDataDir.resolve(APP_FOLDER_NAME);
-        }
-
-        return PathFinder.getAppDataFolder().resolve(APP_FOLDER_NAME);
+        return PathFinder.getLocalAppDataFolder().resolve(APP_FOLDER_NAME);
     }
 
 }

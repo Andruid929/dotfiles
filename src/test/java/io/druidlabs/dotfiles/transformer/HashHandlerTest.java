@@ -142,4 +142,52 @@ class HashHandlerTest {
 
         assertEquals(HashHandler.hashDotfiles(List.of()), HashHandler.hashDotfiles(freshInstall));
     }
+
+    /**
+     * Kept apart from {@link #sampleSetup()} so that changing the shared sample can't change the pinned values.
+     */
+    private static List<Dotfile> pinnedSetup() {
+        return List.of(
+                new Dotfile("vscode", "{\r\n  \"editor.fontSize\": 14,\r\n  \"files.eol\": \"\\n\"\r\n}\r\n",
+                        "~/.config/Code/User", "settings.json"),
+                new Dotfile("bashrc", "# café ☕ 日本語\nexport PS1='\\[\\e[32m\\]\\u@\\h\\[\\e[0m\\] \\w \\$ '\n"
+                        + "\tcomplete -F _git \"g\"\n", "~", ".bashrc"),
+                new Dotfile("Nvim", "set number", "~\\.config\\nvim", "init.vim"));
+    }
+
+    /**
+     * Every test above compares two hashes made by the same build, so a dependency upgrade that changes the output
+     * (Jackson escaping differently, a field order change) would pass them all. A snapshot stored in {@code .sync} by
+     * the previous version would then never match again, and every user's next sync would report a false conflict.
+     * <p>
+     * If this fails after an upgrade, don't just update the expected value: the change needs handling for existing
+     * snapshots first.
+     */
+    @Test
+    void canonicalForm_shouldMatchWhatEarlierVersionsWrote() throws JsonProcessingException {
+        String expected = "[{\"key\":\"bashrc\",\"fileContents\":\"# café ☕ 日本語\\nexport PS1='\\\\[\\\\e[32m\\\\]\\\\u@\\\\h\\\\[\\\\e[0m\\\\] \\\\w \\\\$ '\\n\\tcomplete -F _git \\\"g\\\"\\n\",\"filePath\":\"~\",\"filename\":\".bashrc\"}," +
+                "{\"key\":\"nvim\",\"fileContents\":\"set number\",\"filePath\":\"~/.config/nvim\",\"filename\":\"init.vim\"}," +
+                "{\"key\":\"vscode\",\"fileContents\":\"{\\r\\n  \\\"editor.fontSize\\\": 14,\\r\\n  \\\"files.eol\\\": \\\"\\\\n\\\"\\r\\n}\\r\\n\",\"filePath\":\"~/.config/Code/User\",\"filename\":\"settings.json\"}]";
+
+        assertEquals(expected, JsonHandler.canonicalSerialiseToJsonString(pinnedSetup()));
+    }
+
+    /**
+     * See {@link #canonicalForm_shouldMatchWhatEarlierVersionsWrote()}. This one also catches a change to the hash
+     * itself, such as the algorithm or the text encoding.
+     */
+    @Test
+    void hashDotfiles_shouldMatchWhatEarlierVersionsStored() throws JsonProcessingException {
+        assertEquals("7f16cf86d1391b63b64cf5eb396809832a4ca2c7ffece1d07e5b873aa95d3882",
+                HashHandler.hashDotfiles(pinnedSetup()));
+    }
+
+    /**
+     * Most users start with nothing saved, so this is the snapshot most first syncs store.
+     */
+    @Test
+    void hashDotfiles_ofEmptySetup_shouldMatchWhatEarlierVersionsStored() throws JsonProcessingException {
+        assertEquals("4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+                HashHandler.hashDotfiles(List.of()));
+    }
 }

@@ -34,7 +34,8 @@ public final class JsonHandler {
 
     /**
      * The shared mapper: compact output (on one line), dates as ISO strings rather than timestamps, unknown
-     * properties ignored, and the source included in parse error locations.
+     * properties ignored, anything after the JSON value rejected (so a file with junk left after it, such as the end
+     * of a longer earlier version, reads as corrupt), and the source included in parse error locations.
      */
     private static final JsonMapper mapper;
 
@@ -44,6 +45,7 @@ public final class JsonHandler {
                 .enable(StreamReadFeature.INCLUDE_SOURCE_IN_LOCATION)
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
                 .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
                 .build();
     }
 

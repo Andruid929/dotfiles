@@ -127,6 +127,36 @@ class JsonHandlerTest {
         assertThrows(JsonProcessingException.class, () -> JsonHandler.deserialiseToSet(cutOff));
     }
 
+    /**
+     * What an in-place write that didn't truncate leaves behind: the new, shorter save followed by the end of the old
+     * one. Jackson stops after the first complete value by default, so without rejecting trailing tokens this would
+     * load and silently drop the tail.
+     */
+    @Test
+    void deserialise_withEndOfOlderSaveLeftAfterIt_shouldThrowJsonProcessingException() {
+        String jsonString = """
+                [{"key": "vimrc", "fileContents": "set number", "filePath": "~", "filename": ".vimrc"}]ilename": ".bashrc"}]""";
+
+        assertThrows(JsonProcessingException.class, () -> JsonHandler.deserialiseToSet(jsonString));
+    }
+
+    @Test
+    void deserialise_withTwoSavesPastedOneAfterTheOther_shouldThrowJsonProcessingException() {
+        String jsonString = """
+                [{"key": "vimrc", "fileContents": "set number", "filePath": "~", "filename": ".vimrc"}]
+                [{"key": "bashrc", "fileContents": "alias ll='ls -l'", "filePath": "~", "filename": ".bashrc"}]
+                """;
+
+        assertThrows(JsonProcessingException.class, () -> JsonHandler.deserialiseToSet(jsonString));
+    }
+
+    @Test
+    void deserialise_withNewlinesAnEditorAddedAtTheEnd_shouldLoad() throws JsonProcessingException {
+        String jsonString = "[{\"key\": \"vimrc\", \"fileContents\": \"set number\", \"filePath\": \"~\", \"filename\": \".vimrc\"}]\r\n\r\n  \n";
+
+        assertEquals(1, JsonHandler.deserialiseToSet(jsonString).size());
+    }
+
     @Test
     void deserialise_withContentsEmptiedByHand_shouldThrowJsonProcessingException() {
         String jsonString = """

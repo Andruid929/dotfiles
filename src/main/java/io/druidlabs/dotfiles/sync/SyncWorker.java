@@ -59,11 +59,12 @@ public final class SyncWorker {
     }
 
     /**
-     * Takes a snapshot of the dotfiles, to save as {@code .sync} once a sync succeeds or to compare with the saved one.
+     * Takes a snapshot of the dotfiles as they are, to compare with the saved one. It has no undo record: the snapshot
+     * saved as {@code .sync} after a push or pull adds one, since only then is it known what was replaced.
      *
      * @param dotfiles the dotfiles, local or parsed from the remote file.
      * @param store    the store being synced with, whose provider the snapshot records.
-     * @return a new snapshot of the dotfiles.
+     * @return a new snapshot of the dotfiles, with no undo record.
      * @throws JsonProcessingException if the dotfiles could not be serialised.
      */
     @Contract("_,_ -> new")
@@ -73,6 +74,6 @@ public final class SyncWorker {
 
         SyncProvider syncProvider = store.getSyncProvider();
 
-        return new SyncSnapshot(syncProvider.getId(), dotfilesHash);
+        return new SyncSnapshot(syncProvider.getId(), dotfilesHash, null);
     }
 }

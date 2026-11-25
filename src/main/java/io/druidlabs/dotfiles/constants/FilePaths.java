@@ -43,6 +43,11 @@ public final class FilePaths {
      */
     public static final Path CONFIG_FILE = APP_FOLDER_DIR.resolve(CONFIG_FILENAME);
 
+    /**
+     * The sync snapshot file, which push and pull write once they go through.
+     */
+    public static final Path SYNC_SNAPSHOT_FILE = APP_FOLDER_DIR.resolve(SYNC_SNAPSHOT_FILENAME);
+
     private FilePaths() {
     }
 

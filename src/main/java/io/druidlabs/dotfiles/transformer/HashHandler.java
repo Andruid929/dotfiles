@@ -9,8 +9,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collection;
 import java.util.HexFormat;
+import java.util.regex.Pattern;
 
 import io.druidlabs.dotfiles.Dotfile;
+import io.druidlabs.dotfiles.exceptions.BlankValueException;
 
 /**
  * Hashes dotfiles for sync, which compares hashes rather than contents to tell whether either side changed.
@@ -18,6 +20,8 @@ import io.druidlabs.dotfiles.Dotfile;
 public final class HashHandler {
 
     private static final String HASH_ALGORITHM = "SHA-256";
+
+    private static final Pattern HASH_PATTERN = Pattern.compile("[0-9a-f]{64}");
 
     private HashHandler() {
         //Utility classes cannot be instantiated
@@ -54,6 +58,25 @@ public final class HashHandler {
 
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 is supposed to be supported", e);
+        }
+    }
+
+    /**
+     * Checks a hash read back from disk is one this class produces. Backups are named after their hash, so this is
+     * also what keeps a hand-edited {@code .sync} from pointing outside the backups folder.
+     *
+     * @param hash the hash to check.
+     * @param name what the hash is, for the message.
+     * @throws BlankValueException      if the hash is blank.
+     * @throws IllegalArgumentException if it isn't 64 lower-case hex characters.
+     */
+    public static void requireHash(String hash, String name) {
+        if (hash == null || hash.isBlank()) {
+            throw new BlankValueException(name + " is required");
+        }
+
+        if (!HASH_PATTERN.matcher(hash).matches()) {
+            throw new IllegalArgumentException(name + " must be a SHA-256 hash of 64 lower-case hex characters");
         }
     }
 }

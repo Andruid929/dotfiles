@@ -3,11 +3,29 @@ package io.druidlabs.dotfiles.io;
 import static io.druidlabs.dotfiles.constants.FilePaths.*;
 
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.*;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.FileStore;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.AclEntry;
+import java.nio.file.attribute.AclEntryFlag;
+import java.nio.file.attribute.AclEntryPermission;
+import java.nio.file.attribute.AclEntryType;
+import java.nio.file.attribute.AclFileAttributeView;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
@@ -165,5 +183,36 @@ public final class IOTasks {
         }
     }
 
+    public static void atomicSave(@NotNull Path path, @NotNull String content) throws IOException {
+        Path tempFile = path.resolveSibling(path.getFileName() + ".tmp");
 
+        StandardOpenOption[] openOptions = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
+
+        byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
+
+        try {
+            
+            try (FileChannel writeChannel = FileChannel.open(tempFile, openOptions)) {
+                ByteBuffer buffer = ByteBuffer.wrap(contentBytes);
+
+                while (buffer.hasRemaining()) {
+                    int _ = writeChannel.write(buffer);
+                }
+
+                writeChannel.force(true);
+            }
+
+            Files.move(tempFile, path, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
+
+        } catch (IOException | RuntimeException e) {
+            try {
+                Files.deleteIfExists(tempFile);
+
+            } catch (IOException deleteFailure) {
+                e.addSuppressed(deleteFailure);
+            }
+
+            throw e;
+        }
+    }
 }

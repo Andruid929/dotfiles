@@ -48,6 +48,12 @@ public final class FilePaths {
      */
     public static final Path SYNC_SNAPSHOT_FILE = APP_FOLDER_DIR.resolve(SYNC_SNAPSHOT_FILENAME);
 
+    /**
+     * The folder for the backups push and pull take before replacing anything, each named after its hash. Like
+     * {@link #SYNC_SNAPSHOT_FILE}, it is created only when needed, never by {@code validateAppPaths()}.
+     */
+    public static final Path BACKUPS_DIR = APP_FOLDER_DIR.resolve(BACKUPS_FOLDER_NAME);
+
     private FilePaths() {
     }
 

@@ -16,6 +16,11 @@ public final class Names {
     public static final String APP_FOLDER_NAME = "dotfiles";
 
     /**
+     * The name of the folder for the backups push and pull take before replacing anything.
+     */
+    public static final String BACKUPS_FOLDER_NAME = "backups";
+
+    /**
      * The name of the JSON save file.
      */
     public static final String SAVE_FILENAME = ".files";

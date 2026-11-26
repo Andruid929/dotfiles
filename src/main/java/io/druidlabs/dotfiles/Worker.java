@@ -85,8 +85,8 @@ public final class Worker {
     }
 
     /**
-     * Initialises the worker, sets up a shutdown hook for automatic saving,
-     * and loads dotfiles from storage.
+     * Loads the configs, creates any missing app files and loads the saved dotfiles. If the files can't be created or
+     * the dotfiles can't be loaded, reports it and exits rather than running with an empty set.
      */
     public static void start() {
         Set<Dotfile> savedDotfiles = new HashSet<>();

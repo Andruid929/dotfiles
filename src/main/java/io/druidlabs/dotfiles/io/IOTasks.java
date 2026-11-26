@@ -3,6 +3,7 @@ package io.druidlabs.dotfiles.io;
 import static io.druidlabs.dotfiles.constants.FilePaths.*;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -183,16 +184,40 @@ public final class IOTasks {
         }
     }
 
+    /**
+     * @param path the file being saved.
+     * @return the temporary file {@link #atomicSave(Path, String)} writes before moving it over {@code path}: the
+     * same name plus {@code .tmp}, beside it. A crash between the write and the move leaves it behind.
+     */
+    public static @NotNull Path tempFileFor(@NotNull Path path) {
+        return path.resolveSibling(path.getFileName() + ".tmp");
+    }
+
     public static void atomicSave(@NotNull Path path, @NotNull String content) throws IOException {
-        Path tempFile = path.resolveSibling(path.getFileName() + ".tmp");
+        //The move replaces whatever is at the path, so a symlink would become a regular file. Save to the file it
+        //points to instead, with the temp file beside that. A link tp nothing throws NoSuchFileException
+        if (Files.isSymbolicLink(path)) {
+            path = path.toRealPath();
+        }
+
+        Path tempFile = tempFileFor(path);
 
         StandardOpenOption[] openOptions = {StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE};
 
         byte[] contentBytes = content.getBytes(StandardCharsets.UTF_8);
 
+        Set<PosixFilePermission> targetPermissions = posixPermissionsOf(path);
+
         try {
-            
+
             try (FileChannel writeChannel = FileChannel.open(tempFile, openOptions)) {
+                //The temp file is created with the default permissions, so without this every save would undo a
+                //chmod of the target. Set before writing, so the contents are never open to more than before. Only
+                //when they differ, since file systems such as FAT on Linux refuse any change
+                if (targetPermissions != null && !targetPermissions.equals(Files.getPosixFilePermissions(tempFile))) {
+                    Files.setPosixFilePermissions(tempFile, targetPermissions);
+                }
+
                 ByteBuffer buffer = ByteBuffer.wrap(contentBytes);
 
                 while (buffer.hasRemaining()) {
@@ -213,6 +238,25 @@ public final class IOTasks {
             }
 
             throw e;
+        }
+    }
+
+    /**
+     * @param path the file to check.
+     * @return the file's POSIX permissions, or {@code null} if it doesn't exist or its file system has none, as on
+     * Windows.
+     * @throws IOException if the permissions could not be read.
+     */
+    private static @Nullable Set<PosixFilePermission> posixPermissionsOf(@NotNull Path path) throws IOException {
+        if (Files.getFileAttributeView(path, PosixFileAttributeView.class) == null) {
+            return null;
+        }
+
+        try {
+            return Files.getPosixFilePermissions(path);
+
+        } catch (NoSuchFileException e) {
+            return null;
         }
     }
 }

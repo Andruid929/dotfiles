@@ -4,6 +4,7 @@ import static io.github.andruid929.leutils.stringutil.StringFormatter.interpolat
 
 import java.io.IOException;
 import java.nio.file.FileSystemException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
@@ -86,6 +87,8 @@ public final class PurgeCommand extends CommandAction {
 
                 UserNotification.notify("Successfully deleted save file '{}'", FilePaths.SAVE_FILE);
 
+                deleteLeftoverTempFile(FilePaths.SAVE_FILE);
+
             } catch (IOException e) {
                 if (e instanceof NoSuchFileException nsfe) {
 
@@ -162,6 +165,24 @@ public final class PurgeCommand extends CommandAction {
             }
 
             return ExitCode.SOFTWARE;
+        }
+    }
+
+    /**
+     * Deletes the temporary file a crash mid-save may have left beside {@code file}. It holds a copy of the saved
+     * dotfiles, so leaving it would keep what the user asked to purge. A failure is only logged, since the file
+     * itself is already gone and the next save overwrites the temporary one.
+     *
+     * @param file the file whose temporary file to delete.
+     */
+    private void deleteLeftoverTempFile(Path file) {
+        Path tempFile = IOTasks.tempFileFor(file);
+
+        try {
+            Files.deleteIfExists(tempFile);
+
+        } catch (IOException e) {
+            LOGGER.warn("Unable to delete leftover temporary file '{}'", tempFile, e);
         }
     }
 }
